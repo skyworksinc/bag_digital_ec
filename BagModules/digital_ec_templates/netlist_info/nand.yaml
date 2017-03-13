@@ -1,5 +1,5 @@
 lib_name: digital_ec_templates
-cell_name: inv
+cell_name: nand
 pins: [ "VDD", "VSS", "in", "out" ]
 instances:
   XP:

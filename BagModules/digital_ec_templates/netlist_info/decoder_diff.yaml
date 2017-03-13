@@ -1,0 +1,48 @@
+lib_name: digital_ec_templates
+cell_name: decoder_diff
+pins: [ "VDD", "VSS", "in", "out", "outb" ]
+instances:
+  XAND:
+    lib_name: digital_ec_templates
+    cell_name: and_diff
+    instpins:
+      outb:
+        direction: output
+        net_name: "outb"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "out"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "inb"
+        num_bits: 1
+  XINV:
+    lib_name: digital_ec_templates
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "inb"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "in"
+        num_bits: 1

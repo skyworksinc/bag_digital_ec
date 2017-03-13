@@ -43,7 +43,7 @@ class digital_ec_templates__inv_chain(Module):
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'wp', 'wn', 'fgp_list', 'fgn_list', 'nduml', 'ndumr', 'nsep', 'intent', ]
+    param_list = ['lch', 'wp', 'wn', 'fgp_list', 'fgn_list', 'intentp', 'intentn']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -68,8 +68,8 @@ class digital_ec_templates__inv_chain(Module):
         """
         pass
     
-    def design_specs(self, lch, wp, wn, fgp_list, fgn_list, nduml, ndumr, nsep, intent, **kwargs):
-        """Set the design parameters of this passgate directly.
+    def design_specs(self, lch, wp, wn, fgp_list, fgn_list, intentp, intentn, **kwargs):
+        """Set the design parameters of this module directly.
 
         Parameters
         ----------
@@ -83,14 +83,10 @@ class digital_ec_templates__inv_chain(Module):
             number of pmos fingers per stage.  0 index is first stage.
         fgn_list : list[int]
             number of nmos fingers.
-        nduml : int
-            number of left dummies.
-        ndumr : int
-            number of right dummies.
-        nsep : int
-            number of dummy fingers between each stage.
-        intent : str
-            the device intent of the transistors.
+        intentp : str
+            nmos device intent.
+        intentn : str
+            pmos device intent.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -112,11 +108,7 @@ class digital_ec_templates__inv_chain(Module):
         self.array_instance('XINV', name_list, term_list=term_list)
 
         for idx, inst in enumerate(self.instances['XINV']):
-            inst.design_specs(lch, wp, wn, fgp_list[idx], fgn_list[idx], 0, 0, intent)
-
-        ndum_tot = nsep * (nstage - 1) + nduml + ndumr
-        self.instances['XDP'].design(w=wp, l=lch, nf=ndum_tot, intent=intent)
-        self.instances['XDN'].design(w=wn, l=lch, nf=ndum_tot, intent=intent)
+            inst.design_specs(lch, wp, wn, fgp_list[idx], fgn_list[idx], intentp, intentn)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
@@ -137,21 +129,7 @@ class digital_ec_templates__inv_chain(Module):
         params : dict[str, any]
             the layout parameters dictionary.
         """
-        layout_params = dict(
-            lch=self.parameters['lch'],
-            wp=self.parameters['wp'],
-            wn=self.parameters['wn'],
-            fgp_list=self.parameters['fgp_list'],
-            fgn_list=self.parameters['fgn_list'],
-            nduml=self.parameters['nduml'],
-            ndumr=self.parameters['ndumr'],
-            nsep=self.parameters['nsep'],
-            threshold=self.parameters['intent'],
-            rename_dict=self.get_layout_pin_mapping(),
-        )
-
-        layout_params.update(kwargs)
-        return layout_params
+        return {}
 
     def get_layout_pin_mapping(self):
         """Returns the layout pin mapping dictionary.

@@ -33,17 +33,18 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'inv.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'decoder_diff.yaml'))
 
 
 # noinspection PyPep8Naming
-class digital_ec_templates__inv(Module):
-    """Module for library digital_ec_templates cell inv.
+class digital_ec_templates__decoder_diff(Module):
+    """Module for library digital_ec_templates cell decoder_diff.
 
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'wp', 'wn', 'fgp', 'fgn', 'intentp', 'intentn']
+    param_list = ['num_bits', 'nand2_params', 'nand3_params',
+                  'nor2_params', 'nor3_params', 'inv_params', ]
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -68,25 +69,24 @@ class digital_ec_templates__inv(Module):
         """
         pass
 
-    def design_specs(self, lch, wp, wn, fgp, fgn, intentp, intentn, **kwargs):
+    def design_specs(self, num_bits, nand2_params, nand3_params, nor2_params, nor3_params,
+                     inv_params, **kwargs):
         """Set the design parameters of this module directly.
 
         Parameters
         ----------
-        lch : float
-            channel length, in meters.
-        wp : float or int
-            pmos width, in meters or number of fins.
-        wn : float or int
-            nmos width, in meters or number of fins.
-        fgp : int
-            number of pmos fingers.
-        fgn : int
-            number of nmos fingers.
-        intentp : str
-            nmos device intent.
-        intentn : str
-            pmos device intent.
+        num_bits : int
+            number of input bits.
+        nand2_params : Dict[str, Any]
+            2-input NAND gate parameters.
+        nand3_params : Dict[str, Any]
+            3-input NAND gate parameters.
+        nor2_params : Dict[str, Any]
+            2-input NOR gate parameters.
+        nor3_params : Dict[str, Any]
+            3-input NOR gate parameters.
+        inv_params : Dict[str, Any]
+            inverter parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -94,8 +94,42 @@ class digital_ec_templates__inv(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XP'].design(w=wp, l=lch, nf=fgp, intent=intentp)
-        self.instances['XN'].design(w=wn, l=lch, nf=fgn, intent=intentn)
+        # rename pins
+        in_name = 'in<%d:0>' % (num_bits - 1)
+        num_out = 1 << num_bits
+        self.rename_pin('in', in_name)
+        self.rename_pin('out', 'out<%d:0>' % (num_out - 1))
+        self.rename_pin('outb', 'outb<%d:0>' % (num_out - 1))
+
+        # design AND gates
+        and_name = []
+        and_term = []
+        for idx in range(num_out):
+            and_name.append('XAND%d' % idx)
+            term = {'out': 'out<%d>' % idx, 'outb': 'outb<%d>' % idx}
+            cur_in = ''
+            for bit_idx in range(num_bits - 1, -1, -1):
+                if ((idx & (1 << bit_idx)) >> bit_idx) == 1:
+                    cur_in += ',in<%d>' % bit_idx
+                else:
+                    cur_in += ',inb<%d>' % bit_idx
+            # remove starting comma
+            term['in'] = cur_in[1:]
+            and_term.append(term)
+        self.array_instance('XAND', and_name, and_term)
+        for inst in self.instances['XAND']:
+            inst.design_specs(num_bits, nand2_params, nand3_params, nor2_params,
+                              nor3_params, inv_params)
+
+        # design input inverters
+        inv_name = []
+        inv_term = []
+        for idx in range(num_bits):
+            inv_name.append('XINV%d' % idx)
+            inv_term.append({'in': 'in<%d>' % idx, 'out': 'inb<%d>' % idx})
+        self.array_instance('XINV', inv_name, inv_term)
+        for inst in self.instances['XINV']:
+            inst.design_specs(**inv_params)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

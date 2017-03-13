@@ -33,17 +33,17 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'inv.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'nand.yaml'))
 
 
 # noinspection PyPep8Naming
-class digital_ec_templates__inv(Module):
-    """Module for library digital_ec_templates cell inv.
+class digital_ec_templates__nand(Module):
+    """Module for library digital_ec_templates cell nand.
 
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'wp', 'wn', 'fgp', 'fgn', 'intentp', 'intentn']
+    param_list = ['lch', 'num_in', 'wp', 'wn', 'fg', 'intentp', 'intentn']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -68,21 +68,21 @@ class digital_ec_templates__inv(Module):
         """
         pass
 
-    def design_specs(self, lch, wp, wn, fgp, fgn, intentp, intentn, **kwargs):
+    def design_specs(self, lch, num_in, wp, wn, fg, intentp, intentn, **kwargs):
         """Set the design parameters of this module directly.
 
         Parameters
         ----------
         lch : float
             channel length, in meters.
+        num_in : int
+            number of inputs.
         wp : float or int
             pmos width, in meters or number of fins.
         wn : float or int
             nmos width, in meters or number of fins.
-        fgp : int
-            number of pmos fingers.
-        fgn : int
-            number of nmos fingers.
+        fg : int
+            number of pmos/nmos fingers per transistor.
         intentp : str
             nmos device intent.
         intentn : str
@@ -94,8 +94,36 @@ class digital_ec_templates__inv(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XP'].design(w=wp, l=lch, nf=fgp, intent=intentp)
-        self.instances['XN'].design(w=wn, l=lch, nf=fgn, intent=intentn)
+        if num_in < 2:
+            raise ValueError('Must have at least 2 inputs.')
+
+        self.rename_pin('in', 'in<%d:0>' % (num_in - 1))
+        # array transistors
+        pname, pterm, nname, nterm = [], [], [], []
+        for idx in range(num_in):
+            pname.append('XP%d' % idx)
+            nname.append('XN%d' % idx)
+            pterm.append({'G': 'in<%d>' % idx})
+
+            ndict = {'G': 'in<%d>' % idx}
+            if idx == 0:
+                ndict['S'] = 'VSS'
+            else:
+                ndict['S'] = 'mid<%d>' % (idx - 1)
+
+            if idx == num_in - 1:
+                ndict['D'] = 'out'
+            else:
+                ndict['D'] = 'mid<%d>' % idx
+
+            nterm.append(ndict)
+
+        self.array_instance('XP', pname, pterm)
+        self.array_instance('XN', nname, nterm)
+
+        for idx in range(num_in):
+            self.instances['XP'][idx].design(w=wp, l=lch, nf=fg, intent=intentp)
+            self.instances['XN'][idx].design(w=wn, l=lch, nf=fg, intent=intentn)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

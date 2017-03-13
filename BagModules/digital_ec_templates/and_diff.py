@@ -33,17 +33,18 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'inv.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'and_diff.yaml'))
 
 
 # noinspection PyPep8Naming
-class digital_ec_templates__inv(Module):
-    """Module for library digital_ec_templates cell inv.
+class digital_ec_templates__and_diff(Module):
+    """Module for library digital_ec_templates cell and_diff.
 
     Fill in high level description here.
     """
 
-    param_list = ['lch', 'wp', 'wn', 'fgp', 'fgn', 'intentp', 'intentn']
+    param_list = ['num_in', 'nand2_params', 'nand3_params',
+                  'nor2_params', 'nor3_params', 'inv_params', ]
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -68,25 +69,24 @@ class digital_ec_templates__inv(Module):
         """
         pass
 
-    def design_specs(self, lch, wp, wn, fgp, fgn, intentp, intentn, **kwargs):
+    def design_specs(self, num_in, nand2_params, nand3_params, nor2_params, nor3_params,
+                     inv_params, **kwargs):
         """Set the design parameters of this module directly.
 
         Parameters
         ----------
-        lch : float
-            channel length, in meters.
-        wp : float or int
-            pmos width, in meters or number of fins.
-        wn : float or int
-            nmos width, in meters or number of fins.
-        fgp : int
-            number of pmos fingers.
-        fgn : int
-            number of nmos fingers.
-        intentp : str
-            nmos device intent.
-        intentn : str
-            pmos device intent.
+        num_in : int
+            number of inputs.
+        nand2_params : Dict[str, Any]
+            2-input NAND gate parameters.
+        nand3_params : Dict[str, Any]
+            3-input NAND gate parameters.
+        nor2_params : Dict[str, Any]
+            2-input NOR gate parameters.
+        nor3_params : Dict[str, Any]
+            3-input NOR gate parameters.
+        inv_params : Dict[str, Any]
+            inverter parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -94,8 +94,63 @@ class digital_ec_templates__inv(Module):
                 raise Exception('Parameter %s not defined' % par)
             self.parameters[par] = local_dict[par]
 
-        self.instances['XP'].design(w=wp, l=lch, nf=fgp, intent=intentp)
-        self.instances['XN'].design(w=wn, l=lch, nf=fgn, intent=intentn)
+        if num_in < 2:
+            raise ValueError('Must have at least 2 inputs.')
+        if num_in > 9:
+            # TODO: add support num_in > 9
+            raise ValueError('More than 9 inputs not supported yet.')
+
+        self.rename_pin('in', 'in<%d:0>' % (num_in - 1))
+
+        # design NAND
+        nand_num_in_list = self._get_nand_num_in_list(num_in)
+        num_nand = len(nand_num_in_list)
+        if num_nand == 1:
+            params = nand2_params if nand_num_in_list[0] == 2 else nand3_params
+            self.instances['XNAND'].design_specs(num_in=nand_num_in_list[0], **params)
+        else:
+            in_idx = 0
+            name_list, term_list = [], []
+            for cur_idx, num_in_nand in enumerate(nand_num_in_list):
+                term_list.append({'in': 'in<%d:%d>' % (in_idx + num_in_nand - 1, in_idx),
+                                  'out': 'mid<%d>' % cur_idx})
+                in_idx += num_in_nand
+                name_list.append('XNAND%d' % cur_idx)
+
+            self.array_instance('XNAND', name_list, term_list)
+            for inst, num_in_nand in zip(self.instances['XNAND'], nand_num_in_list):
+                params = nand2_params if num_in_nand == 2 else nand3_params
+                inst.design_specs(num_in=num_in_nand, **params)
+
+        # design NOR
+        if num_nand == 1:
+            # no need for NOR gate
+            self.delete_instance('XNOR')
+        else:
+            self.reconnect_instance_terminal('XNOR', 'in', 'mid<%d:%d>' % (num_nand - 1, 0))
+            params = nor2_params if num_nand == 2 else nor3_params
+            self.instances['XNOR'].design_specs(num_in=num_nand, **params)
+
+        # design inverter
+        if num_nand == 1:
+            self.reconnect_instance_terminal('XINV', 'in', 'outb')
+            self.reconnect_instance_terminal('XINV', 'out', 'out')
+        else:
+            self.reconnect_instance_terminal('XINV', 'in', 'out')
+            self.reconnect_instance_terminal('XINV', 'out', 'outb')
+
+        self.instances['XINV'].design_specs(**inv_params)
+
+    @staticmethod
+    def _get_nand_num_in_list(num_in):
+        # only use nand with 2 or 3 inputs.
+        remainder = num_in % 3
+        if remainder == 0:
+            return [3] * (num_in // 3)
+        elif remainder == 1:
+            return [3] * ((num_in // 3) - 1) + [2, 2]
+        else:
+            return [3] * (num_in // 3) + [2]
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
