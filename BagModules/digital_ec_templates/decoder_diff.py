@@ -133,13 +133,11 @@ class digital_ec_templates__decoder_diff(Module):
             invb_term.append({'in': 'in<%d>' % idx, 'out': 'inb<%d>' % idx})
             invbuf_term.append({'in': 'inb<%d>' % idx, 'out': 'inbuf<%d>' % idx})
 
-        self.array_instance('XINVB', invb_name, invb_term)
-        self.array_instance('XINVBUF', invbuf_name, invbuf_term)
+        self.array_instance('XINVB', invb_name, invb_term, same=True)
+        self.array_instance('XINVBUF', invbuf_name, invbuf_term, same=True)
 
-        inst = self.instances['XINVB'][0]
-        inst.design_specs(**inv_params)
-        self.instances['XINVB'] = [inst] * num_out
-        self.instances['XINVBUF'] = [inst] * num_out
+        self.instances['XINVB'][0].design_specs(**inv_params)
+        self.instances['XINVBUF'][0].design_specs(**inv_params)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

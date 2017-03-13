@@ -118,15 +118,11 @@ class digital_ec_templates__nand(Module):
 
             nterm.append(ndict)
 
-        self.array_instance('XP', pname, pterm)
-        self.array_instance('XN', nname, nterm)
+        self.array_instance('XP', pname, pterm, same=True)
+        self.array_instance('XN', nname, nterm, same=True)
 
-        pinst = self.instances['XP'][0]
-        pinst.design(w=wp, l=lch, nf=fg, intent=intentp)
-        ninst = self.instances['XN'][0]
-        ninst.design(w=wn, l=lch, nf=fg, intent=intentn)
-        self.instances['XP'] = [pinst] * num_in
-        self.instances['XN'] = [ninst] * num_in
+        self.instances['XP'][0].design(w=wp, l=lch, nf=fg, intent=intentp)
+        self.instances['XN'][0].design(w=wn, l=lch, nf=fg, intent=intentn)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
