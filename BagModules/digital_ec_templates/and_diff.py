@@ -107,6 +107,7 @@ class digital_ec_templates__and_diff(Module):
         num_nand = len(nand_num_in_list)
         if num_nand == 1:
             params = nand2_params if nand_num_in_list[0] == 2 else nand3_params
+            self.reconnect_instance_terminal('XNAND', 'in', 'in<%d:0>' % (nand_num_in_list[0] - 1))
             self.instances['XNAND'].design_specs(num_in=nand_num_in_list[0], **params)
         else:
             in_idx = 0

@@ -44,7 +44,7 @@ class digital_ec_templates__decoder_diff(Module):
     """
 
     param_list = ['num_bits', 'nand2_params', 'nand3_params',
-                  'nor2_params', 'nor3_params', 'inv_params', ]
+                  'nor2_params', 'nor3_params', 'and_inv_params', 'inv_params']
 
     def __init__(self, bag_config, parent=None, prj=None, **kwargs):
         Module.__init__(self, bag_config, yaml_file, parent=parent, prj=prj, **kwargs)
@@ -70,7 +70,7 @@ class digital_ec_templates__decoder_diff(Module):
         pass
 
     def design_specs(self, num_bits, nand2_params, nand3_params, nor2_params, nor3_params,
-                     inv_params, **kwargs):
+                     and_inv_params, inv_params, **kwargs):
         """Set the design parameters of this module directly.
 
         Parameters
@@ -85,8 +85,10 @@ class digital_ec_templates__decoder_diff(Module):
             2-input NOR gate parameters.
         nor3_params : Dict[str, Any]
             3-input NOR gate parameters.
+        and_inv_params : Dict[str, Any]
+            AND gate inverter parameters.
         inv_params : Dict[str, Any]
-            inverter parameters.
+            input inverter parameters.
         """
         local_dict = locals()
         for par in self.param_list:
@@ -110,26 +112,34 @@ class digital_ec_templates__decoder_diff(Module):
             cur_in = ''
             for bit_idx in range(num_bits - 1, -1, -1):
                 if ((idx & (1 << bit_idx)) >> bit_idx) == 1:
-                    cur_in += ',in<%d>' % bit_idx
+                    cur_in += ',inbuf<%d>' % bit_idx
                 else:
                     cur_in += ',inb<%d>' % bit_idx
             # remove starting comma
             term['in'] = cur_in[1:]
             and_term.append(term)
         self.array_instance('XAND', and_name, and_term)
-        for inst in self.instances['XAND']:
-            inst.design_specs(num_bits, nand2_params, nand3_params, nor2_params,
-                              nor3_params, inv_params)
+        inst = self.instances['XAND'][0]
+        inst.design_specs(num_bits, nand2_params, nand3_params, nor2_params,
+                          nor3_params, and_inv_params)
+        self.instances['XAND'] = [inst] * num_out
 
-        # design input inverters
-        inv_name = []
-        inv_term = []
+        # design input buffers
+        invb_name, invbuf_name = [], []
+        invb_term, invbuf_term = [], []
         for idx in range(num_bits):
-            inv_name.append('XINV%d' % idx)
-            inv_term.append({'in': 'in<%d>' % idx, 'out': 'inb<%d>' % idx})
-        self.array_instance('XINV', inv_name, inv_term)
-        for inst in self.instances['XINV']:
-            inst.design_specs(**inv_params)
+            invb_name.append('XINVB%d' % idx)
+            invbuf_name.append('XINVBUF%d' % idx)
+            invb_term.append({'in': 'in<%d>' % idx, 'out': 'inb<%d>' % idx})
+            invbuf_term.append({'in': 'inb<%d>' % idx, 'out': 'inbuf<%d>' % idx})
+
+        self.array_instance('XINVB', invb_name, invb_term)
+        self.array_instance('XINVBUF', invbuf_name, invbuf_term)
+
+        inst = self.instances['XINVB'][0]
+        inst.design_specs(**inv_params)
+        self.instances['XINVB'] = [inst] * num_out
+        self.instances['XINVBUF'] = [inst] * num_out
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

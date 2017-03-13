@@ -121,9 +121,12 @@ class digital_ec_templates__nand(Module):
         self.array_instance('XP', pname, pterm)
         self.array_instance('XN', nname, nterm)
 
-        for idx in range(num_in):
-            self.instances['XP'][idx].design(w=wp, l=lch, nf=fg, intent=intentp)
-            self.instances['XN'][idx].design(w=wn, l=lch, nf=fg, intent=intentn)
+        pinst = self.instances['XP'][0]
+        pinst.design(w=wp, l=lch, nf=fg, intent=intentp)
+        ninst = self.instances['XN'][0]
+        ninst.design(w=wn, l=lch, nf=fg, intent=intentn)
+        self.instances['XP'] = [pinst] * num_in
+        self.instances['XN'] = [ninst] * num_in
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
