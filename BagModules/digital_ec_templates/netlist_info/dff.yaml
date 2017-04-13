@@ -1,0 +1,196 @@
+lib_name: digital_ec_templates
+cell_name: dff
+pins: [ "CLK", "I", "O", "VSS", "VDD" ]
+instances:
+  XT2:
+    lib_name: digital_ec_templates
+    cell_name: inv_en
+    instpins:
+      O:
+        direction: inputOutput
+        net_name: "MEM2"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      EN:
+        direction: input
+        net_name: "ICLK"
+        num_bits: 1
+      ENB:
+        direction: input
+        net_name: "ICLKB"
+        num_bits: 1
+      I:
+        direction: input
+        net_name: "LATCH"
+        num_bits: 1
+  XT0:
+    lib_name: digital_ec_templates
+    cell_name: inv_en
+    instpins:
+      O:
+        direction: inputOutput
+        net_name: "MEM1"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      EN:
+        direction: input
+        net_name: "ICLKB"
+        num_bits: 1
+      ENB:
+        direction: input
+        net_name: "ICLK"
+        num_bits: 1
+      I:
+        direction: input
+        net_name: "I"
+        num_bits: 1
+  XT3:
+    lib_name: digital_ec_templates
+    cell_name: inv_en
+    instpins:
+      O:
+        direction: inputOutput
+        net_name: "MEM2"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      EN:
+        direction: input
+        net_name: "ICLKB"
+        num_bits: 1
+      ENB:
+        direction: input
+        net_name: "ICLK"
+        num_bits: 1
+      I:
+        direction: input
+        net_name: "O"
+        num_bits: 1
+  XT1:
+    lib_name: digital_ec_templates
+    cell_name: inv_en
+    instpins:
+      O:
+        direction: inputOutput
+        net_name: "MEM1"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      EN:
+        direction: input
+        net_name: "ICLK"
+        num_bits: 1
+      ENB:
+        direction: input
+        net_name: "ICLKB"
+        num_bits: 1
+      I:
+        direction: input
+        net_name: "LATCH"
+        num_bits: 1
+  XIC1:
+    lib_name: digital_ec_templates
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "ICLK"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "ICLKB"
+        num_bits: 1
+  XIC0:
+    lib_name: digital_ec_templates
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "ICLKB"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "CLK"
+        num_bits: 1
+  XI1:
+    lib_name: digital_ec_templates
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "O"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "MEM2"
+        num_bits: 1
+  XI0:
+    lib_name: digital_ec_templates
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "LATCH"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "MEM1"
+        num_bits: 1

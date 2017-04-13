@@ -1,0 +1,84 @@
+lib_name: digital_ec_templates
+cell_name: inv_en
+pins: [ "I", "O", "VDD", "VSS", "EN", "ENB" ]
+instances:
+  XP0:
+    lib_name: BAG_prim
+    cell_name: pmos4_fast
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "N1"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "I"
+        num_bits: 1
+  XP1:
+    lib_name: BAG_prim
+    cell_name: pmos4_fast
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "N1"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "O"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "ENB"
+        num_bits: 1
+  XN0:
+    lib_name: BAG_prim
+    cell_name: nmos4_fast
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "N0"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "O"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "EN"
+        num_bits: 1
+  XN1:
+    lib_name: BAG_prim
+    cell_name: nmos4_fast
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "N0"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "I"
+        num_bits: 1
