@@ -107,13 +107,15 @@ class digital_ec_templates__and_diff(Module):
         num_nand = len(nand_num_in_list)
         if num_nand == 1:
             params = nand2_params if nand_num_in_list[0] == 2 else nand3_params
-            self.reconnect_instance_terminal('XNAND', 'in', 'in<%d:0>' % (nand_num_in_list[0] - 1))
+            nand_in_name = 'in<%d:0>' % (nand_num_in_list[0] - 1)
             self.instances['XNAND'].design_specs(num_in=nand_num_in_list[0], **params)
+            self.reconnect_instance_terminal('XNAND', nand_in_name, nand_in_name)
         else:
             in_idx = 0
             name_list, term_list = [], []
             for cur_idx, num_in_nand in enumerate(nand_num_in_list):
-                term_list.append({'in': 'in<%d:%d>' % (in_idx + num_in_nand - 1, in_idx),
+                nand_in_name = 'in<%d:0>' % (num_in_nand - 1)
+                term_list.append({nand_in_name: 'in<%d:%d>' % (in_idx + num_in_nand - 1, in_idx),
                                   'out': 'mid<%d>' % cur_idx})
                 in_idx += num_in_nand
                 name_list.append('XNAND%d' % cur_idx)
@@ -128,7 +130,8 @@ class digital_ec_templates__and_diff(Module):
             # no need for NOR gate
             self.delete_instance('XNOR')
         else:
-            self.reconnect_instance_terminal('XNOR', 'in', 'mid<%d:%d>' % (num_nand - 1, 0))
+            bus_range = '<%d:0>' % (num_nand - 1)
+            self.reconnect_instance_terminal('XNOR', 'in%s' % bus_range, 'mid%s' % bus_range)
             params = nor2_params if num_nand == 2 else nor3_params
             self.instances['XNOR'].design_specs(num_in=num_nand, **params)
 

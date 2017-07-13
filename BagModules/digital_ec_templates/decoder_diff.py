@@ -116,7 +116,7 @@ class digital_ec_templates__decoder_diff(Module):
                 else:
                     cur_in += ',inb<%d>' % bit_idx
             # remove starting comma
-            term['in'] = cur_in[1:]
+            term[in_name] = cur_in[1:]
             and_term.append(term)
         self.array_instance('XAND', and_name, and_term)
         inst = self.instances['XAND'][0]
