@@ -118,11 +118,10 @@ class digital_ec_templates__nor(Module):
 
             pterm.append(pdict)
 
-        self.array_instance('XP', pname, pterm, same=True)
-        self.array_instance('XN', nname, nterm, same=True)
-
-        self.instances['XP'][0].design(w=wp, l=lch, nf=fg, intent=intentp)
-        self.instances['XN'][0].design(w=wn, l=lch, nf=fg, intent=intentn)
+        self.instances['XP'].design(w=wp, l=lch, nf=fg, intent=intentp)
+        self.array_instance('XP', pname, pterm)
+        self.instances['XN'].design(w=wn, l=lch, nf=fg, intent=intentn)
+        self.array_instance('XN', nname, nterm)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.

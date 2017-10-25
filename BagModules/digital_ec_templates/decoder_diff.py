@@ -118,11 +118,9 @@ class digital_ec_templates__decoder_diff(Module):
             # remove starting comma
             term[in_name] = cur_in[1:]
             and_term.append(term)
+        self.instances['XAND'].design_specs(num_bits, nand2_params, nand3_params, nor2_params,
+                                            nor3_params, and_inv_params)
         self.array_instance('XAND', and_name, and_term)
-        inst = self.instances['XAND'][0]
-        inst.design_specs(num_bits, nand2_params, nand3_params, nor2_params,
-                          nor3_params, and_inv_params)
-        self.instances['XAND'] = [inst] * num_out
 
         # design input buffers
         invb_name, invbuf_name = [], []
@@ -133,11 +131,10 @@ class digital_ec_templates__decoder_diff(Module):
             invb_term.append({'in': 'in<%d>' % idx, 'out': 'inb<%d>' % idx})
             invbuf_term.append({'in': 'inb<%d>' % idx, 'out': 'inbuf<%d>' % idx})
 
-        self.array_instance('XINVB', invb_name, invb_term, same=True)
-        self.array_instance('XINVBUF', invbuf_name, invbuf_term, same=True)
-
-        self.instances['XINVB'][0].design_specs(**inv_params)
-        self.instances['XINVBUF'][0].design_specs(**inv_params)
+        self.instances['XINVB'].design_specs(**inv_params)
+        self.array_instance('XINVB', invb_name, invb_term)
+        self.instances['XINVBUF'].design_specs(**inv_params)
+        self.array_instance('XINVBUF', invbuf_name, invbuf_term)
 
     def get_layout_params(self, **kwargs):
         """Returns a dictionary with layout parameters.
