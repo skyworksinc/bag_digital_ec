@@ -91,16 +91,17 @@ class InvChain(LaygoBase):
 
         num_g_n, loc_g_n = tr_manager.place_wires(hm_layer, ['io'])
         num_g_p, loc_g_p = tr_manager.place_wires(hm_layer, ['io'])
-        num_ds_sub, loc_ds_sub = tr_manager.place_wires(hm_layer, ['sup'])
+        num_ds_sub, loc_ds_sub = tr_manager.place_wires(hm_layer, ['sup', 'sup'])
 
         num_g_tracks = [0, num_g_n, num_g_p, 0]
         num_gb_tracks = [0, 0, 0, 0]
         num_ds_tracks = [num_ds_sub, 0, 0, num_ds_sub]
 
         # determine number of blocks
-        n_tot = len(fg_list) - 1
+        n_tot = (len(fg_list) - 1) * 2
         for fg in fg_list:
-            n_tot += (fg // 2) + (fg % 2)
+            n_tot += fg
+        n_tot = -(-n_tot // 2) * 2
         # specify row types
         self.set_row_types(row_list, w_list, orient_list, thres_list, draw_boundaries, end_mode,
                            num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
@@ -108,12 +109,15 @@ class InvChain(LaygoBase):
 
         # add blocks
         # nwell/pwell taps
-        nw_tap = self.add_laygo_primitive('sub', loc=(0, 3), nx=n_tot, spx=1)
-        pw_tap = self.add_laygo_primitive('sub', loc=(0, 0), nx=n_tot, spx=1)
+        nw_tap = self.add_laygo_primitive('sub', loc=(0, 3), nx=n_tot // 2, spx=2)
+        pw_tap = self.add_laygo_primitive('sub', loc=(0, 0), nx=n_tot // 2, spx=2)
         # pmos/nmos inverters
         cur_col = 0
         in_list, out_list = [], []
-        vss_list, vdd_list = pw_tap.get_all_port_pins('VSS_d'), nw_tap.get_all_port_pins('VDD_d')
+        d_vss_list = pw_tap.get_all_port_pins('VSS_d')
+        s_vss_list = pw_tap.get_all_port_pins('VSS_s')
+        d_vdd_list = nw_tap.get_all_port_pins('VDD_d')
+        s_vdd_list = nw_tap.get_all_port_pins('VDD_s')
         n_tid = self.make_track_id(1, 'g', loc_g_n[0], width=tr_w_io)
         p_tid = self.make_track_id(2, 'g', loc_g_p[0], width=tr_w_io)
         for idx, fg in enumerate(fg_list):
@@ -121,23 +125,35 @@ class InvChain(LaygoBase):
             num2 = fg // 2
             num1 = fg - 2 * num2
             cur_in, cur_out = [], []
-            p2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 2), nx=num2, spx=1)
-            n2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 1), nx=num2, spx=1)
-            vss_list.extend(n2.get_all_port_pins('d'))
-            vdd_list.extend(p2.get_all_port_pins('d'))
+            p2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 2), nx=num2, spx=2)
+            n2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 1), nx=num2, spx=2)
+            if cur_col % 2 == 0:
+                d_vss_list.extend(n2.get_all_port_pins('d'))
+                d_vdd_list.extend(p2.get_all_port_pins('d'))
+            else:
+                s_vss_list.extend(n2.get_all_port_pins('d'))
+                s_vdd_list.extend(p2.get_all_port_pins('d'))
             cur_in.extend(p2.get_all_port_pins('g'))
             cur_in.extend(n2.get_all_port_pins('g'))
             cur_out.extend(p2.get_all_port_pins('s'))
             cur_out.extend(n2.get_all_port_pins('s'))
+            # noinspection PyUnresolvedReferences
+            cur_col += num2 * p2.master.laygo_size[0]
             if num1 > 0:
-                p1 = self.add_laygo_primitive('fg1d', loc=(cur_col + num2, 2))
-                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col + num2, 1))
-                vss_list.extend(n1.get_all_port_pins('d'))
-                vdd_list.extend(p1.get_all_port_pins('d'))
+                p1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 2))
+                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 1))
+                if cur_col % 2 == 0:
+                    d_vss_list.extend(n1.get_all_port_pins('d'))
+                    d_vdd_list.extend(p1.get_all_port_pins('d'))
+                else:
+                    s_vss_list.extend(n1.get_all_port_pins('d'))
+                    s_vdd_list.extend(p1.get_all_port_pins('d'))
                 cur_in.extend(p1.get_all_port_pins('g'))
                 cur_in.extend(n1.get_all_port_pins('g'))
                 cur_out.extend(p1.get_all_port_pins('s'))
                 cur_out.extend(n1.get_all_port_pins('s'))
+                # noinspection PyUnresolvedReferences
+                cur_col += p1.master.laygo_size[0]
 
             # connect io wires
             if idx % 2 == 0:
@@ -148,18 +164,18 @@ class InvChain(LaygoBase):
             out_warr = self.connect_to_tracks(cur_out, out_tid, min_len_mode=1)
             in_list.append(in_warr)
             out_list.append(out_warr)
-            cur_col += num2 + num1 + 1
+            cur_col += 2
 
         # compute overall block size and fill spaces
         self.fill_space()
 
         # connect supplies
-        vss_tid = self.make_track_id(0, 'ds', loc_ds_sub[0], width=tr_w_sup)
-        vdd_tid = self.make_track_id(3, 'ds', loc_ds_sub[0], width=tr_w_sup)
-        vss_warr = self.connect_to_tracks(vss_list, vss_tid)
-        vdd_warr = self.connect_to_tracks(vdd_list, vdd_tid)
-        self.add_pin('VSS', vss_warr, show=show_pins)
-        self.add_pin('VDD', vdd_warr, show=show_pins)
+        vss_warr1 = self.connect_to_tracks(s_vss_list, self.make_track_id(0, 'ds', loc_ds_sub[0], width=tr_w_sup))
+        vss_warr2 = self.connect_to_tracks(d_vss_list, self.make_track_id(0, 'ds', loc_ds_sub[1], width=tr_w_sup))
+        vdd_warr1 = self.connect_to_tracks(s_vdd_list, self.make_track_id(3, 'ds', loc_ds_sub[0], width=tr_w_sup))
+        vdd_warr2 = self.connect_to_tracks(d_vdd_list, self.make_track_id(3, 'ds', loc_ds_sub[1], width=tr_w_sup))
+        self.add_pin('VSS', [vss_warr1, vss_warr2], show=show_pins)
+        self.add_pin('VDD', [vdd_warr1, vdd_warr2], show=show_pins)
 
         # connect inputs and outputs
         self.add_pin('in', in_list[0], show=show_pins)
