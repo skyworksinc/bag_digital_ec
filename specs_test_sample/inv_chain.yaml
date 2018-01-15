@@ -1,3 +1,9 @@
+routing_grid:
+  layers: [3, 4, 5, 6, 7]
+  spaces: [0.010, 0.010, 0.010, 0.010, 0.010]
+  widths: [0.010, 0.010, 0.010, 0.010, 0.010]
+  bot_dir: 'y'
+
 params:
   config:
     tr_layers: [2, 3]
