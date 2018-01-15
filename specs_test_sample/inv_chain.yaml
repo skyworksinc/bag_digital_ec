@@ -1,0 +1,22 @@
+params:
+  config:
+    tr_layers: [2, 3]
+    tr_widths: [10, 10]
+    tr_spaces: [10, 10]
+    lch: !!float 10e-9
+    w_sub: 4
+    min_sub_tracks: {}
+  wp_list: [2, 3, 4]
+  wn_list: [2, 3, 4]
+  thp: ulvt
+  thn: ulvt
+  fg_list: [1, 2, 3]
+  tr_widths:
+    io: {2: 1, 3: 1, 4: 1}
+    sup: {2: 1, 3: 1, 4: 1}
+  tr_spaces:
+    io: {2: 0, 3: 1, 4: 1}
+    sup: {2: 0, 3: 0, 4: 0}
+  draw_boundaries: True
+  top_layer: 4
+  show_pins: True
