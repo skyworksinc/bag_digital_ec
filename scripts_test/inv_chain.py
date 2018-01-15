@@ -77,7 +77,7 @@ class InvChain(LaygoBase):
 
         # get row information
         row_list = ['ptap', 'nch', 'pch', 'ntap']
-        orient_list = ['R0', 'R0', 'MX', 'MX']
+        orient_list = ['R0', 'MX', 'R0', 'MX']
         thres_list = [thn, thn, thp, thp]
         w_list = [w_sub, max(wn_list), max(wp_list), w_sub]
         row_kwargs = [{}] * len(row_list)
@@ -98,7 +98,9 @@ class InvChain(LaygoBase):
         num_ds_tracks = [num_ds_sub, 0, 0, num_ds_sub]
 
         # determine number of blocks
-        n_tot = sum(fg_list) + len(fg_list - 1)
+        n_tot = len(fg_list) - 1
+        for fg in fg_list:
+            n_tot += (fg // 2) + (fg % 2)
         # specify row types
         self.set_row_types(row_list, w_list, orient_list, thres_list, draw_boundaries, end_mode,
                            num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
@@ -111,7 +113,7 @@ class InvChain(LaygoBase):
         # pmos/nmos inverters
         cur_col = 0
         in_list, out_list = [], []
-        vss_list, vdd_list = pw_tap.get_all_port_pins('d'), nw_tap.get_all_port_pins('d')
+        vss_list, vdd_list = pw_tap.get_all_port_pins('VSS_d'), nw_tap.get_all_port_pins('VDD_d')
         n_tid = self.make_track_id(1, 'g', loc_g_n[0], width=tr_w_io)
         p_tid = self.make_track_id(2, 'g', loc_g_p[0], width=tr_w_io)
         for idx, fg in enumerate(fg_list):
@@ -129,7 +131,7 @@ class InvChain(LaygoBase):
             cur_out.extend(n2.get_all_port_pins('s'))
             if num1 > 0:
                 p1 = self.add_laygo_primitive('fg1d', loc=(cur_col + num2, 2))
-                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col + num2, 2))
+                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col + num2, 1))
                 vss_list.extend(n1.get_all_port_pins('d'))
                 vdd_list.extend(p1.get_all_port_pins('d'))
                 cur_in.extend(p1.get_all_port_pins('g'))
