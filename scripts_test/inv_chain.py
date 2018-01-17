@@ -120,13 +120,13 @@ class InvChain(LaygoBase):
         s_vdd_list = nw_tap.get_all_port_pins('VDD_s')
         n_tid = self.make_track_id(1, 'g', loc_g_n[0], width=tr_w_io)
         p_tid = self.make_track_id(2, 'g', loc_g_p[0], width=tr_w_io)
-        for idx, fg in enumerate(fg_list):
+        for idx, (fg, wp_cur, wn_cur) in enumerate(zip(fg_list, wp_list, wn_list)):
             # create blocks and get ports
             num2 = fg // 2
             num1 = fg - 2 * num2
             cur_in, cur_out = [], []
-            p2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 2), nx=num2, spx=2)
-            n2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 1), nx=num2, spx=2)
+            p2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 2), nx=num2, spx=2, w=wp_cur)
+            n2 = self.add_laygo_primitive('fg2d', loc=(cur_col, 1), nx=num2, spx=2, w=wn_cur)
             if cur_col % 2 == 0:
                 d_vss_list.extend(n2.get_all_port_pins('d'))
                 d_vdd_list.extend(p2.get_all_port_pins('d'))
@@ -140,8 +140,8 @@ class InvChain(LaygoBase):
             # noinspection PyUnresolvedReferences
             cur_col += num2 * p2.master.laygo_size[0]
             if num1 > 0:
-                p1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 2))
-                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 1))
+                p1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 2), w=wp_cur)
+                n1 = self.add_laygo_primitive('fg1d', loc=(cur_col, 1), w=wn_cur)
                 if cur_col % 2 == 0:
                     d_vss_list.extend(n1.get_all_port_pins('d'))
                     d_vdd_list.extend(p1.get_all_port_pins('d'))
