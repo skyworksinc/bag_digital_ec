@@ -1,0 +1,37 @@
+routing_grid:
+  layers: [3, 4, 5, 6, 7]
+  spaces: [0.010, 0.010, 0.010, 0.010, 0.010]
+  widths: [0.010, 0.010, 0.010, 0.010, 0.010]
+  bot_dir: 'y'
+
+params:
+  module: 'digital_ec.layout.stdcells.inv'
+  class: 'Inverter'
+  params:
+    config:
+      tr_layers: [2, 3]
+      tr_widths: [10, 10]
+      tr_spaces: [10, 10]
+      lch: !!float 10e-9
+      w_sub: 4
+      min_sub_tracks: {}
+      wp: 4
+      wn: 4
+      thp: 'ulvt'
+      thn: 'ulvt'
+      row_kwargs: [{}, {}]
+      ng_tracks: [2, 2]
+      ngb_tracks: [2, 2]
+      nds_tracks: [2, 2]
+      tr_w_supply: 2
+    wp: 4
+    wn: 2
+    fg: 4
+    tr_widths:
+      in: {2: 1, 3: 1, 4: 1}
+      out: {2: 1, 3: 1, 4: 1}
+    tr_spaces:
+      in: {2: 0, 3: 1, 4: 1}
+      out: {2: 0, 3: 1, 4: 1}
+    show_pins: True
+  guard_ring_nf: 0
