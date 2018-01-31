@@ -66,7 +66,7 @@ class StdCellWrapper(DigitalBase):
         master = self.new_template(params=params, temp_cls=temp_cls)
         row_info = master.get_digital_row_info()
 
-        self.initialize(row_info, 1, True, 15, guard_ring_nf=guard_ring_nf)
+        self.initialize(row_info, 1, True, 15, guard_ring_nf=guard_ring_nf, num_col=master.laygo_size[0])
 
         self.add_digital_block(master, loc=(0, 0))
         self.set_digital_size(master.laygo_size[0])
