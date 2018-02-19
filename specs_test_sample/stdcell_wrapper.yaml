@@ -15,6 +15,9 @@ params:
       tr_layers: [2, 3]
       tr_widths: [10, 10]
       tr_spaces: [10, 10]
+      w_override:
+        2:
+          2: 20
       lch: !!float 10e-9
       w_sub: 4
       min_sub_tracks: {}
