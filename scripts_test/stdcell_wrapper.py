@@ -22,20 +22,20 @@ def make_tdb(prj, target_lib, specs):
 
 
 def generate(prj, specs):
+    impl_lib = specs['impl_lib']
+    impl_cell = specs['impl_cell']
+
     temp_db = make_tdb(prj, impl_lib, specs)
     params = specs['params']
 
     temp = temp_db.new_template(params=params, temp_cls=StdCellWrapper, debug=False)
 
     print('creating layout')
-    temp_db.batch_layout(prj, [temp], ['STD_WRAP'])
+    temp_db.batch_layout(prj, [temp], [impl_cell])
     print('done')
 
 
 if __name__ == '__main__':
-
-    impl_lib = 'AAAFOO_STDCELL_TEST'
-
     with open('specs_test/stdcell_wrapper.yaml', 'r') as f:
         block_specs = yaml.load(f)
 
