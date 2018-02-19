@@ -3,13 +3,14 @@
 from typing import TYPE_CHECKING, Dict, Any, Set
 
 from bag.layout.routing import TrackManager, TrackID
-from abs_templates_ec.laygo.core import LaygoBase
+
+from .core import StdCellTemplate
 
 if TYPE_CHECKING:
     from bag.layout import TemplateDB
 
 
-class Inverter(LaygoBase):
+class Inverter(StdCellTemplate):
     """A single inverter.
 
     Parameters
@@ -28,7 +29,7 @@ class Inverter(LaygoBase):
     """
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        super(Inverter, self).__init__(temp_db, lib_name, params, used_names, **kwargs)
+        StdCellTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
 
     @classmethod
     def get_params_info(cls):
@@ -59,7 +60,7 @@ class Inverter(LaygoBase):
         )
 
     def draw_layout(self):
-        """Draw the layout of a dynamic latch chain.
+        """Draw the layout of an inverter
         """
 
         config = self.params['config']
@@ -76,29 +77,13 @@ class Inverter(LaygoBase):
 
         wp_row = config['wp']
         wn_row = config['wn']
-        thp = config['thp']
-        thn = config['thn']
-        row_kwargs = config['row_kwargs']
-        num_g_tracks = config['ng_tracks']
-        num_gb_tracks = config['ngb_tracks']
-        num_ds_tracks = config['nds_tracks']
-        tr_w_sup = config['tr_w_supply']
 
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
+        vss_tid, vdd_tid = self.setup_floorplan(config, fg)
+
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces)
-
-        # get row information
-        row_list = ['nch', 'pch']
-        orient_list = ['MX', 'R0']
-        thres_list = [thn, thp]
-        w_list = [wn_row, wp_row]
-
-        # specify row types
-        self.set_row_types(row_list, w_list, orient_list, thres_list, False, 0,
-                           num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
-                           row_kwargs=row_kwargs, num_col=fg)
 
         # get track information
         hm_layer = self.conn_layer + 1
@@ -154,11 +139,8 @@ class Inverter(LaygoBase):
         out_warr = self.connect_to_tracks([outp_warr, outn_warr], tid)
 
         # connect supplies
-        tid = TrackID(hm_layer, -0.5, width=tr_w_sup)
-        vss_warr = self.connect_to_tracks(vss_list, tid)
-        tid = TrackID(hm_layer, self.grid.coord_to_track(hm_layer, self.bound_box.top_unit, unit_mode=True),
-                      width=tr_w_sup)
-        vdd_warr = self.connect_to_tracks(vdd_list, tid)
+        vss_warr = self.connect_to_tracks(vss_list, vss_tid)
+        vdd_warr = self.connect_to_tracks(vdd_list, vdd_tid)
 
         # export
         self.add_pin('VSS', vss_warr, show=show_pins)
