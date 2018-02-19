@@ -115,7 +115,7 @@ class StdCellTemplate(LaygoBase, metaclass=abc.ABCMeta):
         tr_w_sup = config['tr_w_supply']
 
         if len(num_g_tracks) != 2 or len(num_gb_tracks) != 2 or len(num_ds_tracks) != 2:
-            raise ValueError('Standard cell only have two rows, NMOS followed by PMOS.')
+            raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
 
         # get row information
         row_list = ['nch', 'pch']
@@ -123,11 +123,24 @@ class StdCellTemplate(LaygoBase, metaclass=abc.ABCMeta):
         thres_list = [thn, thp]
         w_list = [wn_row, wp_row]
 
+        # merge drain/source tracks because they share supply tracks
+        row_kwargs_default = [dict(place_ignore_conn_sple_ds=True)] * 2
+        if row_kwargs is None:
+            row_kwargs = row_kwargs_default
+        else:
+            if len(row_kwargs) != 2:
+                raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
+            new_kwargs = []
+            for kwargs in row_kwargs:
+                temp = kwargs.copy()
+                temp['place_ignore_conn_sple_ds'] = True
+                new_kwargs.append(temp)
+            row_kwargs = new_kwargs
+
         # take supply width and spacing into account.
         hm_layer = self.conn_layer + 1
         sp_sup = self.grid.get_num_space_tracks(hm_layer, tr_w_sup, half_space=True)
-        # trust me (sorta), we can subtract 1 here.
-        inc = int(round(2 * sp_sup + tr_w_sup)) - 1
+        inc = int(round(2 * sp_sup + tr_w_sup))
         if inc % 2 == 0:
             inc = inc // 2
         else:
