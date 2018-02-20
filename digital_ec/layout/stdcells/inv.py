@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 
+"""This module contains layout generator for various kinds of inverters."""
+
 from typing import TYPE_CHECKING, Dict, Any, Set
 
 from bag.layout.routing import TrackManager, TrackID
 
-from .core import StdCellTemplate
+from .core import StdLaygoTemplate
 
 if TYPE_CHECKING:
     from bag.layout import TemplateDB
 
 
-class Inverter(StdCellTemplate):
+class Inverter(StdLaygoTemplate):
     """A single inverter.
 
     Parameters
@@ -29,7 +31,7 @@ class Inverter(StdCellTemplate):
     """
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        StdCellTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
 
     @classmethod
     def get_params_info(cls):
@@ -147,7 +149,7 @@ class Inverter(StdCellTemplate):
         self.add_pin('out', out_warr, show=show_pins)
 
 
-class InverterTristate(StdCellTemplate):
+class InverterTristate(StdLaygoTemplate):
     """A gated inverter with two enable signals.
 
     Parameters
@@ -166,7 +168,7 @@ class InverterTristate(StdCellTemplate):
     """
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        StdCellTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
 
     @classmethod
     def get_params_info(cls):

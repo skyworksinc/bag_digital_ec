@@ -73,13 +73,11 @@ class StdCellWrapper(DigitalBase):
         self.initialize(row_info, 1, True, 15, guard_ring_nf=guard_ring_nf, num_col=master.laygo_size[0])
 
         self.add_digital_block(master, loc=(0, 0))
-        self.set_digital_size(master.laygo_size[0])
-
         self.fill_space()
 
 
-class StdCellTemplate(LaygoBase, metaclass=abc.ABCMeta):
-    """The base class of all standard cell generators.
+class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
+    """The base class of all laygo standard cell generators.
 
     Parameters
     ----------
