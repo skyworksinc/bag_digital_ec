@@ -70,7 +70,8 @@ class StdCellWrapper(DigitalBase):
         master = self.new_template(params=params, temp_cls=temp_cls)
         row_info = master.get_digital_row_info()
 
-        self.initialize(row_info, 1, True, 15, guard_ring_nf=guard_ring_nf, num_col=master.laygo_size[0])
+        self.initialize(row_info, 1, True, 15, guard_ring_nf=guard_ring_nf,
+                        num_col=master.laygo_size[0])
 
         self.add_digital_block(master, loc=(0, 0))
         self.fill_space()
@@ -121,20 +122,6 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
         thres_list = [thn, thp]
         w_list = [wn_row, wp_row]
 
-        # merge drain/source tracks because they share supply tracks
-        row_kwargs_default = [dict(place_ignore_conn_sple_ds=True)] * 2
-        if row_kwargs is None:
-            row_kwargs = row_kwargs_default
-        else:
-            if len(row_kwargs) != 2:
-                raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
-            new_kwargs = []
-            for kwargs in row_kwargs:
-                temp = kwargs.copy()
-                temp['place_ignore_conn_sple_ds'] = True
-                new_kwargs.append(temp)
-            row_kwargs = new_kwargs
-
         # take supply width and spacing into account.
         hm_layer = self.conn_layer + 1
         sp_sup = self.grid.get_num_space_tracks(hm_layer, tr_w_sup, half_space=True)
@@ -161,10 +148,11 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
                     print(row_idx, tr_type, num_tr)
                     for tidx in range(int(num_tr)):
                         tid = self.get_track_index(row_idx, tr_type, tidx)
-                        warr = self.add_wires(hm_layer, tid, 0, self.bound_box.right_unit, unit_mode=True)
+                        warr = self.add_wires(hm_layer, tid, 0, self.bound_box.right_unit,
+                                              unit_mode=True)
                         self.add_pin('%s_%s_%d' % (row_name, tr_type, tidx), warr)
 
         vss_tid = TrackID(hm_layer, -0.5, width=tr_w_sup)
-        vdd_tid = TrackID(hm_layer, self.grid.coord_to_track(hm_layer, self.bound_box.top_unit, unit_mode=True),
-                          width=tr_w_sup)
+        vdd_tid = TrackID(hm_layer, self.grid.coord_to_track(hm_layer, self.bound_box.top_unit,
+                                                             unit_mode=True), width=tr_w_sup)
         return vss_tid, vdd_tid
