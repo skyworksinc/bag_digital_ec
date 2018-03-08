@@ -77,8 +77,8 @@ class Inverter(StdLaygoTemplate):
         if sig_locs is None:
             sig_locs = {}
         in_tidx = sig_locs.get('in', None)
-        outp_tidx = sig_locs.get('outp', None)
-        outn_tidx = sig_locs.get('outn', None)
+        pout_tidx = sig_locs.get('pout', None)
+        nout_tidx = sig_locs.get('nout', None)
         out_tidx = sig_locs.get('out', None)
 
         vss_tid, vdd_tid = self.setup_floorplan(config, seg)
@@ -93,25 +93,14 @@ class Inverter(StdLaygoTemplate):
         tr_w_out_v = tr_manager.get_width(vm_layer, 'out')
 
         # add blocks and collect wires
-        num2 = seg // 2
-        num1 = seg - 2 * num2
-        p2 = self.add_laygo_primitive('fg2d', loc=(0, 1), nx=num2, spx=2, w=wp)
-        n2 = self.add_laygo_primitive('fg2d', loc=(0, 0), nx=num2, spx=2, w=wn)
-        vdd_list = p2.get_all_port_pins('s')
-        vss_list = n2.get_all_port_pins('s')
-        in_list = p2.get_all_port_pins('g')
-        in_list.extend(n2.get_all_port_pins('g'))
-        outp_list = p2.get_all_port_pins('d')
-        outn_list = n2.get_all_port_pins('d')
-        if num1 > 0:
-            p1 = self.add_laygo_primitive('fg1d', loc=(2 * num2, 1), w=wp)
-            n1 = self.add_laygo_primitive('fg1d', loc=(2 * num2, 0), w=wn)
-            vdd_list.extend(p1.get_all_port_pins('s'))
-            vss_list.extend(n1.get_all_port_pins('s'))
-            in_list.extend(p1.get_all_port_pins('g'))
-            in_list.extend(n1.get_all_port_pins('g'))
-            outp_list.extend(p1.get_all_port_pins('d'))
-            outn_list.extend(n1.get_all_port_pins('d'))
+        pinv = self.add_laygo_mos(1, 0, seg, w=wp)
+        ninv = self.add_laygo_mos(0, 0, seg, w=wn)
+        vdd = pinv['s']
+        vss = ninv['s']
+        pout = pinv['d']
+        nout = ninv['d']
+        pin = pinv['g']
+        nin = ninv['g']
 
         # compute overall block size and fill spaces
         self.fill_space()
@@ -121,26 +110,26 @@ class Inverter(StdLaygoTemplate):
             loc = tr_manager.place_wires(hm_layer, ['in'])[1][0]
             in_tidx = self.get_track_index(0, 'g', loc)
         tid = TrackID(hm_layer, in_tidx, width=tr_w_in)
-        in_warr = self.connect_to_tracks(in_list, tid)
+        in_warr = self.connect_to_tracks([pin, nin], tid)
 
         # connect output
         out_loc = tr_manager.place_wires(hm_layer, ['out'])[1][0]
-        if outp_tidx is None:
-            outp_tidx = self.get_track_index(1, 'gb', out_loc)
-        tid = TrackID(hm_layer, outp_tidx, width=tr_w_out_h)
-        outp_warr = self.connect_to_tracks(outp_list, tid, min_len_mode=0)
-        if outn_tidx is None:
-            outn_tidx = self.get_track_index(0, 'gb', out_loc)
-        tid = TrackID(hm_layer, outn_tidx, width=tr_w_out_h)
-        outn_warr = self.connect_to_tracks(outn_list, tid, min_len_mode=0)
+        if pout_tidx is None:
+            pout_tidx = self.get_track_index(1, 'gb', out_loc)
+        tid = TrackID(hm_layer, pout_tidx, width=tr_w_out_h)
+        pout_warr = self.connect_to_tracks(pout, tid, min_len_mode=0)
+        if nout_tidx is None:
+            nout_tidx = self.get_track_index(0, 'gb', out_loc)
+        tid = TrackID(hm_layer, nout_tidx, width=tr_w_out_h)
+        nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
         if out_tidx is None:
-            out_tidx = self.grid.coord_to_nearest_track(vm_layer, outp_warr.middle, half_track=True)
+            out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
         tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
-        out_warr = self.connect_to_tracks([outp_warr, outn_warr], tid)
+        out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
 
         # connect supplies
-        vss_warr = self.connect_to_tracks(vss_list, vss_tid)
-        vdd_warr = self.connect_to_tracks(vdd_list, vdd_tid)
+        vss_warr = self.connect_to_tracks(vss, vss_tid)
+        vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
 
         # export
         self.add_pin('VSS', vss_warr, show=show_pins)
@@ -216,8 +205,8 @@ class InverterTristate(StdLaygoTemplate):
         if sig_locs is None:
             sig_locs = {}
         in_tidx = sig_locs.get('in', None)
-        outp_tidx = sig_locs.get('outp', None)
-        outn_tidx = sig_locs.get('outn', None)
+        pout_tidx = sig_locs.get('pout', None)
+        nout_tidx = sig_locs.get('nout', None)
         out_tidx = sig_locs.get('out', None)
         enb_tidx = sig_locs.get('enb', None)
         en_tidx = sig_locs.get('en', None)
@@ -233,8 +222,8 @@ class InverterTristate(StdLaygoTemplate):
         tr_w_out_v = tr_manager.get_width(vm_layer, 'out')
 
         # add blocks and collect wires
-        pinv = self.add_laygo_mos(1, 0, seg, gate_loc='s', stack=True)
-        ninv = self.add_laygo_mos(0, 0, seg, gate_loc='s', stack=True)
+        pinv = self.add_laygo_mos(1, 0, seg, gate_loc='s', stack=True, w=wp)
+        ninv = self.add_laygo_mos(0, 0, seg, gate_loc='s', stack=True, w=wn)
         vdd = pinv['s']
         vss = ninv['s']
         pout = pinv['d']
@@ -265,10 +254,10 @@ class InverterTristate(StdLaygoTemplate):
             else:
                 in_tidx = (in_tidx2 + 1) / 4
         out_loc = tr_manager.place_wires(hm_layer, ['out'])[1][0]
-        if outp_tidx is None:
-            outp_tidx = self.get_track_index(1, 'gb', out_loc)
-        if outn_tidx is None:
-            outn_tidx = self.get_track_index(0, 'gb', out_loc)
+        if pout_tidx is None:
+            pout_tidx = self.get_track_index(1, 'gb', out_loc)
+        if nout_tidx is None:
+            nout_tidx = self.get_track_index(0, 'gb', out_loc)
 
         # connect wires
         tid = TrackID(hm_layer, in_tidx, width=tr_w_in)
@@ -277,9 +266,9 @@ class InverterTristate(StdLaygoTemplate):
         en_warr = self.connect_to_tracks(en, tid)
         tid = TrackID(hm_layer, enb_tidx, width=tr_w_en)
         enb_warr = self.connect_to_tracks(enb, tid)
-        tid = TrackID(hm_layer, outp_tidx, width=tr_w_out_h)
+        tid = TrackID(hm_layer, pout_tidx, width=tr_w_out_h)
         pout_warr = self.connect_to_tracks(pout, tid, min_len_mode=0)
-        tid = TrackID(hm_layer, outn_tidx, width=tr_w_out_h)
+        tid = TrackID(hm_layer, nout_tidx, width=tr_w_out_h)
         nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
 
         # connect output
