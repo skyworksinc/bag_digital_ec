@@ -233,29 +233,16 @@ class InverterTristate(StdLaygoTemplate):
         tr_w_out_v = tr_manager.get_width(vm_layer, 'out')
 
         # add blocks and collect wires
-        numr = (seg // 2)
-        numl = seg - numr
-        pl = self.add_laygo_primitive('stack2s', loc=(0, 1), nx=numl, spx=4, w=wp)
-        nl = self.add_laygo_primitive('stack2s', loc=(0, 0), nx=numl, spx=4, w=wn)
-        vdd_list = pl.get_all_port_pins('s')
-        vss_list = nl.get_all_port_pins('s')
-        outp_list = pl.get_all_port_pins('d')
-        outn_list = nl.get_all_port_pins('d')
-        enb_list = pl.get_all_port_pins('g1')
-        en_list = nl.get_all_port_pins('g1')
-        in_list = pl.get_all_port_pins('g0')
-        in_list.extend(nl.get_all_port_pins('g0'))
-        if numr > 0:
-            pr = self.add_laygo_primitive('stack2s', loc=(2, 1), nx=numr, flip=True, spx=4, w=wp)
-            nr = self.add_laygo_primitive('stack2s', loc=(2, 0), nx=numr, flip=True, spx=4, w=wn)
-            vdd_list.extend(pr.get_all_port_pins('s'))
-            vss_list.extend(nr.get_all_port_pins('s'))
-            outp_list.extend(pr.get_all_port_pins('d'))
-            outn_list.extend(nr.get_all_port_pins('d'))
-            enb_list.extend(pr.get_all_port_pins('g1'))
-            en_list.extend(nr.get_all_port_pins('g1'))
-            in_list.extend(pr.get_all_port_pins('g0'))
-            in_list.extend(nr.get_all_port_pins('g0'))
+        pinv = self.add_laygo_mos(1, 0, seg, gate_loc='s', stack=True)
+        ninv = self.add_laygo_mos(0, 0, seg, gate_loc='s', stack=True)
+        vdd = pinv['s']
+        vss = ninv['s']
+        pout = pinv['d']
+        nout = ninv['d']
+        enb = pinv['g1']
+        en = ninv['g1']
+        pin = pinv['g0']
+        nin = ninv['g0']
 
         # compute overall block size and fill spaces
         self.fill_space()
@@ -285,25 +272,25 @@ class InverterTristate(StdLaygoTemplate):
 
         # connect wires
         tid = TrackID(hm_layer, in_tidx, width=tr_w_in)
-        in_warr = self.connect_to_tracks(in_list, tid)
+        in_warr = self.connect_to_tracks([pin, nin], tid)
         tid = TrackID(hm_layer, en_tidx, width=tr_w_en)
-        en_warr = self.connect_to_tracks(en_list, tid)
+        en_warr = self.connect_to_tracks(en, tid)
         tid = TrackID(hm_layer, enb_tidx, width=tr_w_en)
-        enb_warr = self.connect_to_tracks(enb_list, tid)
+        enb_warr = self.connect_to_tracks(enb, tid)
         tid = TrackID(hm_layer, outp_tidx, width=tr_w_out_h)
-        outp_warr = self.connect_to_tracks(outp_list, tid)
+        pout_warr = self.connect_to_tracks(pout, tid, min_len_mode=0)
         tid = TrackID(hm_layer, outn_tidx, width=tr_w_out_h)
-        outn_warr = self.connect_to_tracks(outn_list, tid)
+        nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
 
         # connect output
         if out_tidx is None:
-            out_tidx = self.grid.coord_to_nearest_track(vm_layer, outp_warr.middle, half_track=True)
+            out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
         tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
-        out_warr = self.connect_to_tracks([outp_warr, outn_warr], tid)
+        out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
 
         # connect supplies
-        vss_warr = self.connect_to_tracks(vss_list, vss_tid)
-        vdd_warr = self.connect_to_tracks(vdd_list, vdd_tid)
+        vss_warr = self.connect_to_tracks(vss, vss_tid)
+        vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
 
         # export
         self.add_pin('VSS', vss_warr, show=show_pins)
