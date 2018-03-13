@@ -69,8 +69,10 @@ class StdCellWrapper(DigitalBase):
         params['show_pins'] = True
         master = self.new_template(params=params, temp_cls=temp_cls)
 
+        num_col = -(-master.laygo_size[0] // 2) * 2
+
         self.initialize(master.row_layout_info, 1, True, 15, guard_ring_nf=guard_ring_nf,
-                        num_col=master.laygo_size[0])
+                        num_col=num_col)
 
         self.add_digital_block(master, loc=(0, 0))
         self.fill_space()
