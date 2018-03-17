@@ -1,27 +1,7 @@
-lib_name: digital_ec_templates
+lib_name: bag_digital_ec
 cell_name: inv
 pins: [ "VDD", "VSS", "in", "out" ]
 instances:
-  XP:
-    lib_name: BAG_prim
-    cell_name: pmos4_standard
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "out"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "in"
-        num_bits: 1
   XN:
     lib_name: BAG_prim
     cell_name: nmos4_standard
@@ -37,6 +17,26 @@ instances:
       B:
         direction: inputOutput
         net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "in"
+        num_bits: 1
+  XP:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
         num_bits: 1
       G:
         direction: inputOutput

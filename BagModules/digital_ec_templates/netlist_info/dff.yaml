@@ -2,6 +2,18 @@ lib_name: digital_ec_templates
 cell_name: dff
 pins: [ "CLK", "I", "O", "VSS", "VDD" ]
 instances:
+  PIN0:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN1:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
+    instpins: {}
   XT2:
     lib_name: digital_ec_templates
     cell_name: inv_en
@@ -114,6 +126,14 @@ instances:
         direction: input
         net_name: "LATCH"
         num_bits: 1
+  PIN4:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN5:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
   XIC1:
     lib_name: digital_ec_templates
     cell_name: inv

@@ -1,70 +1,18 @@
-lib_name: digital_ec_templates
-cell_name: inv_en
-pins: [ "I", "O", "VDD", "VSS", "EN", "ENB" ]
+lib_name: bag_digital_ec
+cell_name: nand
+pins: [ "VDD", "VSS", "in<1:0>", "out" ]
 instances:
-  XP0:
-    lib_name: BAG_prim
-    cell_name: pmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "N1"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "I"
-        num_bits: 1
-  XP1:
-    lib_name: BAG_prim
-    cell_name: pmos4_fast
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "N1"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "O"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "ENB"
-        num_bits: 1
-  PIN5:
-    lib_name: basic
-    cell_name: ipin
-    instpins: {}
-  PIN4:
-    lib_name: basic
-    cell_name: ipin
-    instpins: {}
-  PIN0:
-    lib_name: basic
-    cell_name: ipin
-    instpins: {}
   XN0:
     lib_name: BAG_prim
-    cell_name: nmos4_fast
+    cell_name: nmos4_standard
     instpins:
       S:
         direction: inputOutput
-        net_name: "N0"
+        net_name: "VSS"
         num_bits: 1
       D:
         direction: inputOutput
-        net_name: "O"
+        net_name: "mid<0>"
         num_bits: 1
       B:
         direction: inputOutput
@@ -72,19 +20,19 @@ instances:
         num_bits: 1
       G:
         direction: inputOutput
-        net_name: "EN"
+        net_name: "in<0>"
         num_bits: 1
   XN1:
     lib_name: BAG_prim
-    cell_name: nmos4_fast
+    cell_name: nmos4_standard
     instpins:
       S:
         direction: inputOutput
-        net_name: "VSS"
+        net_name: "mid<0>"
         num_bits: 1
       D:
         direction: inputOutput
-        net_name: "N0"
+        net_name: "out"
         num_bits: 1
       B:
         direction: inputOutput
@@ -92,17 +40,61 @@ instances:
         num_bits: 1
       G:
         direction: inputOutput
-        net_name: "I"
+        net_name: "in<1>"
         num_bits: 1
-  PIN6:
+  XP1:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "in<1>"
+        num_bits: 1
+  XP0:
+    lib_name: BAG_prim
+    cell_name: pmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "in<0>"
+        num_bits: 1
+  PIN1:
     lib_name: basic
     cell_name: iopin
     instpins: {}
-  PIN3:
+  PIN0:
     lib_name: basic
     cell_name: iopin
     instpins: {}
   PIN2:
     lib_name: basic
-    cell_name: iopin
+    cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
     instpins: {}
