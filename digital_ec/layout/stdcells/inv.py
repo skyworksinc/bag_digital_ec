@@ -62,9 +62,6 @@ class Inverter(StdLaygoTemplate):
         )
 
     def draw_layout(self):
-        """Draw the layout of an inverter
-        """
-
         config = self.params['config']
         wp = self.params['wp']
         wn = self.params['wn']
@@ -205,9 +202,6 @@ class InverterTristate(StdLaygoTemplate):
         )
 
     def draw_layout(self):
-        """Draw the layout of an inverter
-        """
-
         config = self.params['config']
         wp = self.params['wp']
         wn = self.params['wn']

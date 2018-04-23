@@ -74,8 +74,6 @@ class StdCellWrapper(DigitalBase):
         )
 
     def draw_layout(self):
-        """Draw the layout of a dynamic latch chain.
-        """
         mod = self.params['module']
         cls = self.params['class']
         params = self.params['params'].copy()
@@ -87,7 +85,7 @@ class StdCellWrapper(DigitalBase):
         params['show_pins'] = False
         master = self.new_template(params=params, temp_cls=temp_cls)
 
-        num_col = -(-master.laygo_size[0] // 2) * 2
+        num_col = -(-master.num_cols // 2) * 2
 
         self.initialize(master.row_layout_info, 1, True, 15, guard_ring_nf=guard_ring_nf,
                         num_col=num_col)
@@ -100,7 +98,10 @@ class StdCellWrapper(DigitalBase):
 
         self.connect_to_tracks(vss_warrs, inst.get_pin('VSS').track_id)
         self.connect_to_tracks(vdd_warrs, inst.get_pin('VDD').track_id)
-        self._sch_params = master.sch_params.copy()
+        if hasattr(master, 'sch_params'):
+            self._sch_params = master.sch_params
+        else:
+            self._sch_params = None
 
 
 class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
