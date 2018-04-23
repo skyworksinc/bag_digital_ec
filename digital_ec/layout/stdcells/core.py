@@ -11,6 +11,7 @@ from abs_templates_ec.laygo.core import LaygoBase
 from abs_templates_ec.digital.core import DigitalBase
 
 if TYPE_CHECKING:
+    from bag.core import BagProject
     from bag.layout.template import TemplateDB
 
 
@@ -37,6 +38,23 @@ class StdCellWrapper(DigitalBase):
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
+
+    @classmethod
+    def generate_cells(cls, prj, specs, **kwargs):
+        # type: (BagProject, Dict[str, Any], **kwargs) -> None
+        mod_name = specs['module']
+        cls_name = specs['class']
+
+        std_params = {'module': mod_name, 'class': cls_name, 'params': specs['params']}
+        new_specs = specs.copy()
+        new_specs['params'] = std_params
+        prj.generate_cell(new_specs, cls, **kwargs)
 
     @classmethod
     def get_params_info(cls):
@@ -66,7 +84,7 @@ class StdCellWrapper(DigitalBase):
         cls_mod = importlib.import_module(mod)
         temp_cls = getattr(cls_mod, cls)
 
-        params['show_pins'] = True
+        params['show_pins'] = False
         master = self.new_template(params=params, temp_cls=temp_cls)
 
         num_col = -(-master.laygo_size[0] // 2) * 2
@@ -74,8 +92,15 @@ class StdCellWrapper(DigitalBase):
         self.initialize(master.row_layout_info, 1, True, 15, guard_ring_nf=guard_ring_nf,
                         num_col=num_col)
 
-        self.add_digital_block(master, loc=(0, 0))
-        self.fill_space()
+        inst = self.add_digital_block(master, loc=(0, 0))
+        for port_name in inst.port_names_iter():
+            self.reexport(inst.get_port(port_name), show=True)
+
+        vss_warrs, vdd_warrs, [], [] = self.fill_space()
+
+        self.connect_to_tracks(vss_warrs, inst.get_pin('VSS').track_id)
+        self.connect_to_tracks(vdd_warrs, inst.get_pin('VDD').track_id)
+        self._sch_params = master.sch_params.copy()
 
 
 class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):

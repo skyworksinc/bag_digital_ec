@@ -32,6 +32,12 @@ class Inverter(StdLaygoTemplate):
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
 
     @classmethod
     def get_params_info(cls):
@@ -137,6 +143,17 @@ class Inverter(StdLaygoTemplate):
         self.add_pin('in', in_warr, show=show_pins)
         self.add_pin('out', out_warr, show=show_pins)
 
+        # set properties
+        self._sch_params = dict(
+            lch=config['lch'],
+            wp=wp,
+            wn=wn,
+            thp=config['thp'],
+            thn=config['thn'],
+            segp=seg,
+            segn=seg,
+        )
+
 
 class InverterTristate(StdLaygoTemplate):
     """A gated inverter with two enable signals.
@@ -158,6 +175,12 @@ class InverterTristate(StdLaygoTemplate):
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
 
     @classmethod
     def get_params_info(cls):
@@ -288,3 +311,14 @@ class InverterTristate(StdLaygoTemplate):
         self.add_pin('en', en_warr, show=show_pins)
         self.add_pin('enb', enb_warr, show=show_pins)
         self.add_pin('out', out_warr, show=show_pins)
+
+        # set properties
+        self._sch_params = dict(
+            lch=config['lch'],
+            wp=wp,
+            wn=wn,
+            thp=config['thp'],
+            thn=config['thn'],
+            segp=seg,
+            segn=seg,
+        )

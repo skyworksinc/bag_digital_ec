@@ -24,30 +24,29 @@ class bag_digital_ec__tinv(Module):
     @classmethod
     def get_params_info(cls):
         # type: () -> Dict[str, str]
-        """Returns a dictionary from parameter names to descriptions.
-
-        Returns
-        -------
-        param_info : Optional[Dict[str, str]]
-            dictionary from parameter names to descriptions.
-        """
         return dict(
+            lch='channel length.',
+            wp='PMOS width.',
+            wn='NMOS width.',
+            thp='PMOS threshold.',
+            thn='NMOS threshold.',
+            segp='PMOS segments.',
+            segn='NMOS segments.',
         )
 
-    def design(self):
-        """To be overridden by subclasses to design this module.
+    def design(self, lch, wp, wn, thp, thn, segp, segn):
+        if segp < 1 or segn < 1:
+            raise ValueError('number of segments must be >= 1.')
 
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
+        self._set_segments('XN', 'XNEN', 'mn', lch, wn, thn, segn)
+        self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, segp)
 
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
+    def _set_segments(self, bot_name, top_name, mid_name, lch, w, th, seg):
+        self.instances[bot_name].design(w=w, l=lch, nf=1, intent=th)
+        self.instances[top_name].design(w=w, l=lch, nf=1, intent=th)
+        if seg > 1:
+            suffix = '<%d:0>' % (seg - 1)
+            self.array_instance(bot_name, [bot_name + suffix],
+                                term_list=[dict(D=mid_name + suffix)])
+            self.array_instance(top_name, [top_name + suffix],
+                                term_list=[dict(S=mid_name + suffix)])
