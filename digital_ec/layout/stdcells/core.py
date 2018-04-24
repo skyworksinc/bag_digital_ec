@@ -84,20 +84,23 @@ class StdCellWrapper(DigitalBase):
 
         params['show_pins'] = False
         master = self.new_template(params=params, temp_cls=temp_cls)
-
         num_cols = -(-master.num_cols // 2) * 2
+        num_rows = master.digital_size[1]
 
-        self.initialize(master.row_layout_info, 1, num_cols=num_cols, draw_boundaries=True,
+        self.initialize(master.row_layout_info, num_rows, num_cols=num_cols, draw_boundaries=True,
                         end_mode=15, guard_ring_nf=guard_ring_nf)
 
         inst = self.add_digital_block(master, loc=(0, 0))
         for port_name in inst.port_names_iter():
-            self.reexport(inst.get_port(port_name), show=True)
+            if port_name == 'VSS' or port_name == 'VDD':
+                label = port_name + ':'
+            else:
+                label = ''
+            self.reexport(inst.get_port(port_name), label=label, show=True)
 
         vss_warrs, vdd_warrs, [], [] = self.fill_space()
-
-        self.connect_to_tracks(vss_warrs, inst.get_pin('VSS').track_id)
-        self.connect_to_tracks(vdd_warrs, inst.get_pin('VDD').track_id)
+        self.add_pin('VSS', vss_warrs, label='VSS:', show=True)
+        self.add_pin('VDD', vdd_warrs, label='VDD:', show=True)
         if hasattr(master, 'sch_params'):
             self._sch_params = master.sch_params
         else:
