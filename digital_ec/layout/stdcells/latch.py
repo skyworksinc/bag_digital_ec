@@ -5,15 +5,16 @@
 
 from typing import TYPE_CHECKING, Dict, Any, Set
 
-from abs_templates_ec.digital.core import DigitalBase
+from bag.layout.routing import TrackManager, TrackID
 
+from .core import StdLaygoTemplate
 from .inv import Inverter, InverterTristate
 
 if TYPE_CHECKING:
     from bag.layout.template import TemplateDB
 
 
-class LatchCK2(DigitalBase):
+class LatchCK2(StdLaygoTemplate):
     """A transmission gate latch with differential clock inputs.
 
     Parameters
@@ -33,7 +34,7 @@ class LatchCK2(DigitalBase):
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
 
     @property
@@ -68,14 +69,25 @@ class LatchCK2(DigitalBase):
         in_fanout = 4
         fb_fanout = 8
 
+        config = self.params['config']
+        wp = self.params['wp']
+        wn = self.params['wn']
         seg = self.params['seg']
+        tr_widths = self.params['tr_widths']
+        tr_spaces = self.params['tr_spaces']
         show_pins = self.params['show_pins']
+        sig_locs = self.params['sig_locs']
 
-        sub_params = self.params.copy()
-        sub_params['show_pins'] = False
-        del sub_params['sig_locs']
+        wp_row = config['wp']
+        wn_row = config['wn']
+
+        if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
+            raise ValueError('Invalid choice of wp and/or wn.')
 
         # make masters
+        sub_params = self.params.copy()
+        sub_params['show_pins'] = False
+        sub_params['sig_locs'] = None
         inv_master = self.new_template(params=sub_params, temp_cls=Inverter)
         seg_t0 = int(round(seg / (2 * in_fanout))) * 2
         sub_params['seg'] = max(seg_t0, 2)
@@ -88,11 +100,11 @@ class LatchCK2(DigitalBase):
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
         num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
-        self.initialize(inv_master.row_layout_info, 1, num_cols=num_cols)
 
-        t0 = self.add_digital_block(t0_master, loc=(0, 0))
-        t1 = self.add_digital_block(t1_master, loc=(t0_ncol + blk_sp, 0))
-        inv = self.add_digital_block(inv_master, loc=(num_cols - inv_ncol, 0))
+        self.setup_floorplan(config, num_cols)
+        t0 = self.add_laygo_template(t0_master, 0)
+        t1 = self.add_laygo_template(t1_master, t0_ncol + blk_sp)
+        inv = self.add_laygo_template(inv_master, num_cols - inv_ncol)
 
         self.fill_space()
 
