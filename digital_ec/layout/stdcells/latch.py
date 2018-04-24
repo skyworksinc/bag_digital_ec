@@ -173,8 +173,12 @@ class LatchCK2(StdLaygoTemplate):
         clkb_col = t1_col - blk_sp - 1
         clk_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clk_col), width=ym_w_in)
         clkb_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clkb_col), width=ym_w_in)
-        clk = self.connect_to_tracks([t0.get_pin('en'), t1.get_pin('enb')], clk_tid)
-        clkb = self.connect_to_tracks([t0.get_pin('enb'), t1.get_pin('en')], clkb_tid)
+        t0_enb = t0.get_pin('enb')
+        t1_enb = t1.get_pin('enb')
+        self.extend_wires(t0_enb, min_len_mode=1)
+        self.extend_wires(t1_enb, min_len_mode=-1)
+        clk = self.connect_to_tracks([t0.get_pin('en'), t1_enb], clk_tid)
+        clkb = self.connect_to_tracks([t0_enb, t1.get_pin('en')], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
         self.add_pin('clkb', clkb, show=show_pins)
 
