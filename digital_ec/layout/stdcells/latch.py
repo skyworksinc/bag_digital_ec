@@ -58,7 +58,8 @@ class LatchCK2(StdLaygoTemplate):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
-            sig_locs='Signal track location dictionary.',
+            switch_in='True to switch input track.',
+            switch_en='True to switch en track.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -66,7 +67,8 @@ class LatchCK2(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
-            sig_locs=None,
+            switch_in=False,
+            switch_en=False,
             show_pins=True,
         )
 
@@ -81,6 +83,8 @@ class LatchCK2(StdLaygoTemplate):
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        switch_in = self.params['switch_in']
+        switch_en = self.params['switch_en']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -128,17 +132,27 @@ class LatchCK2(StdLaygoTemplate):
         pd0_tid = self.make_track_id(1, 'gb', d_locs[0], width=hm_w_d)
         pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
 
-        sig_locs = {'in': ng1_tid.base_index, 'pout': pd1_tid.base_index,
-                    'nout': nd1_tid.base_index}
-        inv_master = inv_master.new_template_with(sig_locs=sig_locs)
-        sig_locs = {'in': pg0_tid.base_index, 'pout': pd0_tid.base_index,
-                    'nout': nd0_tid.base_index, 'en': ng0_tid.base_index,
-                    'enb': pg1_tid.base_index}
-        t1_master = t1_master.new_template_with(sig_locs=sig_locs)
-        sig_locs = {'in': pg1_tid.base_index, 'pout': pd0_tid.base_index,
-                    'nout': nd0_tid.base_index, 'en': ng1_tid.base_index,
-                    'enb': pg0_tid.base_index}
-        t0_master = t0_master.new_template_with(sig_locs=sig_locs)
+        if switch_in:
+            t0_in_tid, t0_enb_tid = pg0_tid, pg1_tid
+        else:
+            t0_in_tid, t0_enb_tid = pg1_tid, pg0_tid
+        if switch_en:
+            t0_en_tid, t1_en_tid = ng1_tid, ng0_tid
+
+        else:
+            t0_en_tid, t1_en_tid = ng0_tid, ng1_tid
+
+        sub_sig_locs = {'in': t0_en_tid.base_index, 'pout': pd1_tid.base_index,
+                        'nout': nd1_tid.base_index}
+        inv_master = inv_master.new_template_with(sig_locs=sub_sig_locs)
+        sub_sig_locs = {'in': t0_enb_tid.base_index, 'pout': pd0_tid.base_index,
+                        'nout': nd0_tid.base_index, 'en': t1_en_tid.base_index,
+                        'enb': t0_in_tid.base_index}
+        t1_master = t1_master.new_template_with(sig_locs=sub_sig_locs)
+        sub_sig_locs = {'in': t0_in_tid.base_index, 'pout': pd0_tid.base_index,
+                        'nout': nd0_tid.base_index, 'en': t0_en_tid.base_index,
+                        'enb': t0_enb_tid.base_index}
+        t0_master = t0_master.new_template_with(sig_locs=sub_sig_locs)
 
         # add instances
         t1_col = t0_ncol + blk_sp
@@ -165,6 +179,7 @@ class LatchCK2(StdLaygoTemplate):
         in2 = t1.get_pin('in')
         self.connect_to_track_wires(in2, out)
         self.add_pin('out', out, show=show_pins)
+        self.add_pin('out_hm', in2, show=show_pins)
 
         # connect middle node
         lay_info = self.laygo_info
@@ -179,14 +194,20 @@ class LatchCK2(StdLaygoTemplate):
         clkb_col = t1_col - blk_sp - 1
         clk_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clk_col), width=ym_w_in)
         clkb_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clkb_col), width=ym_w_in)
+        t0_en = t0.get_pin('en')
         t0_enb = t0.get_pin('enb')
+        t1_en = t1.get_pin('en')
         t1_enb = t1.get_pin('enb')
         self.extend_wires(t0_enb, min_len_mode=1)
         self.extend_wires(t1_enb, min_len_mode=-1)
-        clk = self.connect_to_tracks([t0.get_pin('en'), t1_enb], clk_tid)
-        clkb = self.connect_to_tracks([t0_enb, t1.get_pin('en')], clkb_tid)
+        clk = self.connect_to_tracks([t0_en, t1_enb], clk_tid)
+        clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
         self.add_pin('clkb', clkb, show=show_pins)
+        self.add_pin('t0_enb', t0_enb, show=False)
+        self.add_pin('t0_en', t0_en, show=False)
+        self.add_pin('t1_enb', t1_enb, show=False)
+        self.add_pin('t1_en', t1_en, show=False)
 
         # set properties
         self._sch_params = dict(
@@ -263,9 +284,6 @@ class DFlipFlopCK2(StdLaygoTemplate):
         config = self.params['config']
         wp = self.params['wp']
         wn = self.params['wn']
-        seg = self.params['seg']
-        tr_widths = self.params['tr_widths']
-        tr_spaces = self.params['tr_spaces']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -278,9 +296,12 @@ class DFlipFlopCK2(StdLaygoTemplate):
         lat_params = self.params.copy()
         lat_params['show_pins'] = False
         lat_params['sig_locs'] = None
+        lat_params['switch_en'] = True
         s_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
         seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
         lat_params['seg'] = seg_m
+        lat_params['switch_en'] = False
+        lat_params['switch_in'] = True
         m_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
 
         # setup floorplan
@@ -291,18 +312,29 @@ class DFlipFlopCK2(StdLaygoTemplate):
 
         # add instances
         s_col = m_ncol + blk_sp
-        minst = self.add_laygo_template(m_master, 0)
-        sinst = self.add_laygo_template(s_master, s_col)
+        m_inst = self.add_laygo_template(m_master, 0)
+        s_inst = self.add_laygo_template(s_master, s_col)
 
         self.fill_space()
 
         # connect/export VSS/VDD
         vss_list, vdd_list = [], []
-        for inst in (minst, sinst):
+        for inst in (m_inst, s_inst):
             vss_list.append(inst.get_pin('VSS'))
             vdd_list.append(inst.get_pin('VDD'))
         self.add_pin('VSS', self.connect_wires(vss_list), show=show_pins)
         self.add_pin('VDD', self.connect_wires(vdd_list), show=show_pins)
+
+        # connect intermediate node
+        self.connect_wires([s_inst.get_pin('in'), m_inst.get_pin('out_hm')])
+        # connect clocks
+        self.connect_wires([s_inst.get_pin('t0_en'), m_inst.get_pin('t1_en')])
+        self.connect_wires([s_inst.get_pin('t0_enb'), m_inst.get_pin('t1_enb')])
+        # add pins
+        self.add_pin('in', m_inst.get_pin('in'), show=show_pins)
+        self.add_pin('out', s_inst.get_pin('out'), show=show_pins)
+        self.add_pin('clk', m_inst.get_pin('clkb'), show=show_pins)
+        self.add_pin('clkb', m_inst.get_pin('clk'), show=show_pins)
 
         # set properties
         self._sch_params = dict(
@@ -311,6 +343,7 @@ class DFlipFlopCK2(StdLaygoTemplate):
             wn=wn,
             thp=config['thp'],
             thn=config['thn'],
-            seg_dict=dict(seg_m=seg_m, seg_s=seg),
+            seg_m=m_master.sch_params['seg_dict'],
+            seg_s=s_master.sch_params['seg_dict'],
         )
         self._seg_in = m_master.seg_in

@@ -24,30 +24,16 @@ class bag_digital_ec__dff_ck2(Module):
     @classmethod
     def get_params_info(cls):
         # type: () -> Dict[str, str]
-        """Returns a dictionary from parameter names to descriptions.
-
-        Returns
-        -------
-        param_info : Optional[Dict[str, str]]
-            dictionary from parameter names to descriptions.
-        """
         return dict(
+            lch='channel length.',
+            wp='PMOS width.',
+            wn='NMOS width.',
+            thp='PMOS threshold.',
+            thn='NMOS threshold.',
+            seg_m='Master latch segments dictionary.',
+            seg_s='Slave latch segments dictionary.',
         )
 
-    def design(self):
-        """To be overridden by subclasses to design this module.
-
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
+    def design(self, lch, wp, wn, thp, thn, seg_m, seg_s):
+        self.instances['XM'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_m)
+        self.instances['XS'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_s)
