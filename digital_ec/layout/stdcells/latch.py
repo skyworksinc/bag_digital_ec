@@ -87,12 +87,12 @@ class LatchCK2(DigitalBase):
         t0_ncol = t0_master.num_cols
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
-        num_col = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
-        self.initialize(inv_master.row_layout_info, 1, False, 0, num_col=num_col)
+        num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
+        self.initialize(inv_master.row_layout_info, 1, num_cols=num_cols)
 
         t0 = self.add_digital_block(t0_master, loc=(0, 0))
         t1 = self.add_digital_block(t1_master, loc=(t0_ncol + blk_sp, 0))
-        inv = self.add_digital_block(inv_master, loc=(num_col - inv_ncol, 0))
+        inv = self.add_digital_block(inv_master, loc=(num_cols - inv_ncol, 0))
 
         self.fill_space()
 

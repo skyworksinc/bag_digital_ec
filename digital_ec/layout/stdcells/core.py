@@ -85,10 +85,10 @@ class StdCellWrapper(DigitalBase):
         params['show_pins'] = False
         master = self.new_template(params=params, temp_cls=temp_cls)
 
-        num_col = -(-master.num_cols // 2) * 2
+        num_cols = -(-master.num_cols // 2) * 2
 
-        self.initialize(master.row_layout_info, 1, True, 15, guard_ring_nf=guard_ring_nf,
-                        num_col=num_col)
+        self.initialize(master.row_layout_info, 1, num_cols=num_cols, draw_boundaries=True,
+                        end_mode=15, guard_ring_nf=guard_ring_nf)
 
         inst = self.add_digital_block(master, loc=(0, 0))
         for port_name in inst.port_names_iter():
