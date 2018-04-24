@@ -8,7 +8,8 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'latch_ck2.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info',
+                                                                   'latch_ck2.yaml'))
 
 
 # noinspection PyPep8Naming
@@ -24,30 +25,19 @@ class bag_digital_ec__latch_ck2(Module):
     @classmethod
     def get_params_info(cls):
         # type: () -> Dict[str, str]
-        """Returns a dictionary from parameter names to descriptions.
-
-        Returns
-        -------
-        param_info : Optional[Dict[str, str]]
-            dictionary from parameter names to descriptions.
-        """
         return dict(
+            lch='channel length.',
+            wp='PMOS width.',
+            wn='NMOS width.',
+            thp='PMOS threshold.',
+            thn='NMOS threshold.',
+            seg_dict='Segments dictionary.',
         )
 
-    def design(self):
-        """To be overridden by subclasses to design this module.
-
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
+    def design(self, lch, wp, wn, thp, thn, seg_dict):
+        self.instances['XTBUF'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
+                                       segp=seg_dict['pt0'], segn=seg_dict['nt0'])
+        self.instances['XTFB'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
+                                      segp=seg_dict['pt1'], segn=seg_dict['nt1'])
+        self.instances['XBUF'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
+                                      segp=seg_dict['pinv'], segn=seg_dict['ninv'])

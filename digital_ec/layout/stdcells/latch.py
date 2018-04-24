@@ -89,12 +89,12 @@ class LatchCK2(StdLaygoTemplate):
         sub_params['sig_locs'] = None
         sub_params['out_vm'] = True
         inv_master = self.new_template(params=sub_params, temp_cls=Inverter)
-        seg_t0 = int(round(seg / (2 * in_fanout))) * 2
-        sub_params['seg'] = max(seg_t0, 2)
+        seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
+        sub_params['seg'] = seg_t0
         sub_params['out_vm'] = False
         t0_master = self.new_template(params=sub_params, temp_cls=InverterTristate)
-        seg_t1 = int(round(seg / (2 * fb_fanout))) * 2
-        sub_params['seg'] = max(seg_t1, 2)
+        seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
+        sub_params['seg'] = seg_t1
         t1_master = self.new_template(params=sub_params, temp_cls=InverterTristate)
 
         # setup floorplan
