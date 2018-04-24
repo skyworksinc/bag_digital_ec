@@ -50,6 +50,7 @@ class Inverter(StdLaygoTemplate):
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
             sig_locs='Signal track location dictionary.',
+            out_vm='True to draw output on vertical metal layer.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -58,6 +59,7 @@ class Inverter(StdLaygoTemplate):
         # type: () -> Dict[str, Any]
         return dict(
             sig_locs=None,
+            out_vm=True,
             show_pins=True,
         )
 
@@ -68,8 +70,9 @@ class Inverter(StdLaygoTemplate):
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
-        show_pins = self.params['show_pins']
         sig_locs = self.params['sig_locs']
+        out_vm = self.params['out_vm']
+        show_pins = self.params['show_pins']
 
         wp_row = config['wp']
         wn_row = config['wn']
@@ -86,7 +89,7 @@ class Inverter(StdLaygoTemplate):
 
         vss_tid, vdd_tid = self.setup_floorplan(config, seg)
 
-        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces)
+        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
         # get track information
         hm_layer = self.conn_layer + 1
@@ -125,10 +128,12 @@ class Inverter(StdLaygoTemplate):
             nout_tidx = self.get_track_index(0, 'gb', out_loc)
         tid = TrackID(hm_layer, nout_tidx, width=tr_w_out_h)
         nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
-        if out_tidx is None:
-            out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
-        tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
-        out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
+        if out_vm:
+            if out_tidx is None:
+                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
+            tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
+            out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
+            self.add_pin('out', out_warr, show=show_pins)
 
         # connect supplies
         vss_warr = self.connect_to_tracks(vss, vss_tid)
@@ -138,7 +143,8 @@ class Inverter(StdLaygoTemplate):
         self.add_pin('VSS', vss_warr, show=show_pins)
         self.add_pin('VDD', vdd_warr, show=show_pins)
         self.add_pin('in', in_warr, show=show_pins)
-        self.add_pin('out', out_warr, show=show_pins)
+        self.add_pin('pout', pout_warr, show=False)
+        self.add_pin('nout', nout_warr, show=False)
 
         # set properties
         self._sch_params = dict(
@@ -190,6 +196,7 @@ class InverterTristate(StdLaygoTemplate):
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
             sig_locs='Signal track location dictionary.',
+            out_vm='True to draw output on vertical metal layer.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -198,6 +205,7 @@ class InverterTristate(StdLaygoTemplate):
         # type: () -> Dict[str, Any]
         return dict(
             sig_locs=None,
+            out_vm=True,
             show_pins=True,
         )
 
@@ -208,8 +216,9 @@ class InverterTristate(StdLaygoTemplate):
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
-        show_pins = self.params['show_pins']
         sig_locs = self.params['sig_locs']
+        out_vm = self.params['out_vm']
+        show_pins = self.params['show_pins']
 
         wp_row = config['wp']
         wn_row = config['wn']
@@ -228,7 +237,7 @@ class InverterTristate(StdLaygoTemplate):
         enb_tidx = sig_locs.get('enb', None)
         en_tidx = sig_locs.get('en', None)
 
-        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces)
+        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
         # get track information
         hm_layer = self.conn_layer + 1
@@ -289,10 +298,12 @@ class InverterTristate(StdLaygoTemplate):
         nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
 
         # connect output
-        if out_tidx is None:
-            out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
-        tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
-        out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
+        if out_vm:
+            if out_tidx is None:
+                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
+            tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
+            out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
+            self.add_pin('out', out_warr, show=show_pins)
 
         # connect supplies
         vss_warr = self.connect_to_tracks(vss, vss_tid)
@@ -304,7 +315,8 @@ class InverterTristate(StdLaygoTemplate):
         self.add_pin('in', in_warr, show=show_pins)
         self.add_pin('en', en_warr, show=show_pins)
         self.add_pin('enb', enb_warr, show=show_pins)
-        self.add_pin('out', out_warr, show=show_pins)
+        self.add_pin('pout', pout_warr, show=False)
+        self.add_pin('nout', nout_warr, show=False)
 
         # set properties
         self._sch_params = dict(
