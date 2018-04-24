@@ -143,8 +143,8 @@ class Inverter(StdLaygoTemplate):
         self.add_pin('VSS', vss_warr, show=show_pins)
         self.add_pin('VDD', vdd_warr, show=show_pins)
         self.add_pin('in', in_warr, show=show_pins)
-        self.add_pin('pout', pout_warr, show=False)
-        self.add_pin('nout', nout_warr, show=False)
+        self.add_pin('pout', pout_warr, label='out', show=False)
+        self.add_pin('nout', nout_warr, label='out', show=False)
 
         # set properties
         self._sch_params = dict(
@@ -315,8 +315,8 @@ class InverterTristate(StdLaygoTemplate):
         self.add_pin('in', in_warr, show=show_pins)
         self.add_pin('en', en_warr, show=show_pins)
         self.add_pin('enb', enb_warr, show=show_pins)
-        self.add_pin('pout', pout_warr, show=False)
-        self.add_pin('nout', nout_warr, show=False)
+        self.add_pin('pout', pout_warr, label='out', show=False)
+        self.add_pin('nout', nout_warr, label='out', show=False)
 
         # set properties
         self._sch_params = dict(

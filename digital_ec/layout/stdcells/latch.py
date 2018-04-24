@@ -179,7 +179,7 @@ class LatchCK2(StdLaygoTemplate):
         in2 = t1.get_pin('in')
         self.connect_to_track_wires(in2, out)
         self.add_pin('out', out, show=show_pins)
-        self.add_pin('out_hm', in2, show=show_pins)
+        self.add_pin('out_hm', in2, label='out', show=show_pins)
 
         # connect middle node
         lay_info = self.laygo_info
@@ -204,10 +204,10 @@ class LatchCK2(StdLaygoTemplate):
         clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
         self.add_pin('clkb', clkb, show=show_pins)
-        self.add_pin('t0_enb', t0_enb, show=False)
-        self.add_pin('t0_en', t0_en, show=False)
-        self.add_pin('t1_enb', t1_enb, show=False)
-        self.add_pin('t1_en', t1_en, show=False)
+        self.add_pin('t0_enb', t0_enb, label='clkb', show=False)
+        self.add_pin('t0_en', t0_en, label='clk', show=False)
+        self.add_pin('t1_enb', t1_enb, label='clk', show=False)
+        self.add_pin('t1_en', t1_en, label='clkb', show=False)
 
         # set properties
         self._sch_params = dict(
