@@ -36,11 +36,17 @@ class LatchCK2(StdLaygoTemplate):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
+        self._seg_in = None
 
     @property
     def sch_params(self):
         # type: () -> Dict[str, Any]
         return self._sch_params
+
+    @property
+    def seg_in(self):
+        # type: () -> int
+        return self._seg_in
 
     @classmethod
     def get_params_info(cls):
@@ -191,3 +197,120 @@ class LatchCK2(StdLaygoTemplate):
             thn=config['thn'],
             seg_dict=dict(pinv=seg, ninv=seg, pt0=seg_t0, nt0=seg_t0, pt1=seg_t1, nt1=seg_t1),
         )
+        self._seg_in = seg_t0
+
+
+class DFlipFlopCK2(StdLaygoTemplate):
+    """A transmission gate flip-flop with differential clock inputs.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+        self._seg_in = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
+
+    @property
+    def seg_in(self):
+        # type: () -> int
+        return self._seg_in
+
+    @classmethod
+    def get_params_info(cls):
+        # type: () -> Dict[str, str]
+        return dict(
+            config='laygo configuration dictionary.',
+            wp='pmos widths.',
+            wn='nmos widths.',
+            seg='number of segments.',
+            tr_widths='Track width dictionary.',
+            tr_spaces='Track spacing dictionary.',
+            sig_locs='Signal track location dictionary.',
+            show_pins='True to draw pin geometries.',
+        )
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            sig_locs=None,
+            show_pins=True,
+        )
+
+    def draw_layout(self):
+        blk_sp = 2
+        fanout = 4
+
+        config = self.params['config']
+        wp = self.params['wp']
+        wn = self.params['wn']
+        seg = self.params['seg']
+        tr_widths = self.params['tr_widths']
+        tr_spaces = self.params['tr_spaces']
+        show_pins = self.params['show_pins']
+
+        wp_row = config['wp']
+        wn_row = config['wn']
+
+        if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
+            raise ValueError('Invalid choice of wp and/or wn.')
+
+        # make masters
+        lat_params = self.params.copy()
+        lat_params['show_pins'] = False
+        lat_params['sig_locs'] = None
+        s_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
+        seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
+        lat_params['seg'] = seg_m
+        m_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
+
+        # setup floorplan
+        m_ncol = m_master.num_cols
+        s_ncol = s_master.num_cols
+        num_cols = m_ncol + s_ncol + blk_sp
+        self.setup_floorplan(config, num_cols)
+
+        # add instances
+        s_col = m_ncol + blk_sp
+        minst = self.add_laygo_template(m_master, 0)
+        sinst = self.add_laygo_template(s_master, s_col)
+
+        self.fill_space()
+
+        # connect/export VSS/VDD
+        vss_list, vdd_list = [], []
+        for inst in (minst, sinst):
+            vss_list.append(inst.get_pin('VSS'))
+            vdd_list.append(inst.get_pin('VDD'))
+        self.add_pin('VSS', self.connect_wires(vss_list), show=show_pins)
+        self.add_pin('VDD', self.connect_wires(vdd_list), show=show_pins)
+
+        # set properties
+        self._sch_params = dict(
+            lch=config['lch'],
+            wp=wp,
+            wn=wn,
+            thp=config['thp'],
+            thn=config['thn'],
+            seg_dict=dict(seg_m=seg_m, seg_s=seg),
+        )
+        self._seg_in = m_master.seg_in
