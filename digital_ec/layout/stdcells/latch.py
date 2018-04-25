@@ -7,14 +7,15 @@ from typing import TYPE_CHECKING, Dict, Any, Set
 
 from bag.layout.routing import TrackManager, TrackID
 
-from .core import StdLaygoTemplate
+from abs_templates_ec.digital.core import DigitalBase
+
 from .inv import Inverter, InverterTristate
 
 if TYPE_CHECKING:
     from bag.layout.template import TemplateDB
 
 
-class LatchCK2(StdLaygoTemplate):
+class LatchCK2(DigitalBase):
     """A transmission gate latch with differential clock inputs.
 
     Parameters
@@ -34,7 +35,7 @@ class LatchCK2(StdLaygoTemplate):
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
         self._seg_in = None
 
@@ -112,7 +113,7 @@ class LatchCK2(StdLaygoTemplate):
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
         num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
-        self.setup_floorplan(config, num_cols)
+        self.initialize(inv_master.row_layout_info, 1, num_cols=num_cols)
 
         # change masters
         hm_layer = self.conn_layer + 1
@@ -157,9 +158,9 @@ class LatchCK2(StdLaygoTemplate):
         # add instances
         t1_col = t0_ncol + blk_sp
         inv_col = num_cols - inv_ncol
-        t0 = self.add_laygo_template(t0_master, 0)
-        t1 = self.add_laygo_template(t1_master, t1_col)
-        inv = self.add_laygo_template(inv_master, inv_col)
+        t0 = self.add_digital_block(t0_master, (0, 0))
+        t1 = self.add_digital_block(t1_master, (t1_col, 0))
+        inv = self.add_digital_block(inv_master, (inv_col, 0))
 
         self.fill_space()
 
@@ -221,7 +222,7 @@ class LatchCK2(StdLaygoTemplate):
         self._seg_in = seg_t0
 
 
-class DFlipFlopCK2(StdLaygoTemplate):
+class DFlipFlopCK2(DigitalBase):
     """A transmission gate flip-flop with differential clock inputs.
 
     Parameters
@@ -241,7 +242,7 @@ class DFlipFlopCK2(StdLaygoTemplate):
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
         self._seg_in = None
 
@@ -308,12 +309,12 @@ class DFlipFlopCK2(StdLaygoTemplate):
         m_ncol = m_master.num_cols
         s_ncol = s_master.num_cols
         num_cols = m_ncol + s_ncol + blk_sp
-        self.setup_floorplan(config, num_cols)
+        self.initialize(m_master.row_layout_info, 1, num_cols=num_cols)
 
         # add instances
         s_col = m_ncol + blk_sp
-        m_inst = self.add_laygo_template(m_master, 0)
-        s_inst = self.add_laygo_template(s_master, s_col)
+        m_inst = self.add_digital_block(m_master, (0, 0))
+        s_inst = self.add_digital_block(s_master, (s_col, 0))
 
         self.fill_space()
 
