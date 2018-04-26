@@ -8,7 +8,8 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'mux_passgate_core.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info',
+                                                                   'mux_passgate_core.yaml'))
 
 
 # noinspection PyPep8Naming
@@ -24,30 +25,26 @@ class bag_digital_ec__mux_passgate_core(Module):
     @classmethod
     def get_params_info(cls):
         # type: () -> Dict[str, str]
-        """Returns a dictionary from parameter names to descriptions.
-
-        Returns
-        -------
-        param_info : Optional[Dict[str, str]]
-            dictionary from parameter names to descriptions.
-        """
         return dict(
+            num_in='number of inputs.',
+            lch='channel length.',
+            wp='PMOS width.',
+            wn='NMOS width.',
+            thp='PMOS threshold.',
+            thn='NMOS threshold.',
+            segp='PMOS segments.',
+            segn='NMOS segments.',
         )
 
-    def design(self):
-        """To be overridden by subclasses to design this module.
+    def design(self, num_in, lch, wp, wn, thp, thn, segp, segn):
+        if num_in < 2:
+            raise ValueError('num_in = %d must be greater than 1.' % num_in)
 
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
+        suffix = '<%d:0>' % (num_in - 1)
+        for name in ['in', 'sel', 'selb']:
+            self.rename_pin(name, name + suffix)
 
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
+        name_list = ['XPG' + suffix]
+        term_list = [{'en': 'sel' + suffix, 'enb': 'selb' + suffix, 's': 'in' + suffix}]
+        self.instances['XPG'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=segp, segn=segn)
+        self.array_instance('XPG', name_list, term_list=term_list)
