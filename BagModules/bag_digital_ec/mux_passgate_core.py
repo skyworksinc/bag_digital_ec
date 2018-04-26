@@ -26,7 +26,7 @@ class bag_digital_ec__mux_passgate_core(Module):
     def get_params_info(cls):
         # type: () -> Dict[str, str]
         return dict(
-            num_in='number of inputs.',
+            nin='number of inputs.',
             lch='channel length.',
             wp='PMOS width.',
             wn='NMOS width.',
@@ -36,11 +36,11 @@ class bag_digital_ec__mux_passgate_core(Module):
             segn='NMOS segments.',
         )
 
-    def design(self, num_in, lch, wp, wn, thp, thn, segp, segn):
-        if num_in < 2:
-            raise ValueError('num_in = %d must be greater than 1.' % num_in)
+    def design(self, nin, lch, wp, wn, thp, thn, segp, segn):
+        if nin < 2:
+            raise ValueError('num_in = %d must be greater than 1.' % nin)
 
-        suffix = '<%d:0>' % (num_in - 1)
+        suffix = '<%d:0>' % (nin - 1)
         for name in ['in', 'sel', 'selb']:
             self.rename_pin(name, name + suffix)
 
