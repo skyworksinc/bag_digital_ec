@@ -40,7 +40,7 @@ class bag_digital_ec__decoder_diff(Module):
         suf = '<%d:0>' % (nin - 1)
         in_name = 'in' + suf
         nout = 1 << nin
-        self.rename_pin('in', in_name)
+        self.rename_pin('in<1:0>', in_name)
         self.rename_pin('out', 'out<%d:0>' % (nout - 1))
         self.rename_pin('outb', 'outb<%d:0>' % (nout - 1))
 

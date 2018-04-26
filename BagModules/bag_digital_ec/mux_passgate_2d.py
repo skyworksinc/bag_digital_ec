@@ -46,7 +46,7 @@ class bag_digital_ec__mux_passgate_2d(Module):
         mux_nin0 = 1 << nin0
         mux_nin1 = 1 << nin1
         seg = seg_dict['mux']
-        self.instances['XCORE'].design(nin0=mux_nin0, nin1=mux_nin1, wp=wp, wn=wn,
+        self.instances['XCORE'].design(nin0=mux_nin0, nin1=mux_nin1, lch=lch, wp=wp, wn=wn,
                                        thp=thp, thn=thn, segp=seg, segn=seg)
         self.reconnect_instance_terminal('XCORE', in_name, in_name)
         suf0 = '<%d:0>' % (mux_nin0 - 1)

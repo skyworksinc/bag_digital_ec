@@ -40,7 +40,7 @@ class bag_digital_ec__and_diff(Module):
         if nin > 9:
             raise ValueError('More than 9 inputs not supported yet.')
 
-        self.rename_pin('in', 'in<%d:0>' % (nin - 1))
+        self.rename_pin('in<1:0>', 'in<%d:0>' % (nin - 1))
 
         # design NAND
         nand_nin_list = self._get_nand_nin_list(nin)

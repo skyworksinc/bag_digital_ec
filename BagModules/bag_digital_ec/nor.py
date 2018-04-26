@@ -52,7 +52,7 @@ class bag_digital_ec__nor(Module):
             self.rename_pin('in<1:0>', 'in<%d:0>' % (nin - 1))
 
         name_list = ['XN<%d:0>' % (nin - 1)]
-        term_list = [dict(G='in<%d:0>' % nin - 1)]
+        term_list = [dict(G='in<%d:0>' % (nin - 1))]
         self.instances['XN'].design(w=wn, l=lch, nf=segn, intent=thn)
         self.array_instance('XN', name_list, term_list=term_list)
 
