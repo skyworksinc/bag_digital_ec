@@ -1,0 +1,84 @@
+lib_name: bag_digital_ec
+cell_name: and_diff
+pins: [ "VDD", "VSS", "in<1:0>", "out", "outb" ]
+instances:
+  XINV:
+    lib_name: bag_digital_ec
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "out"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "outb"
+        num_bits: 1
+  XNAND:
+    lib_name: bag_digital_ec
+    cell_name: nand
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "outb"
+        num_bits: 1
+      in<1:0>:
+        direction: input
+        net_name: "in<1:0>"
+        num_bits: 2
+  XNOR:
+    lib_name: bag_digital_ec
+    cell_name: nor
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "out_nor"
+        num_bits: 1
+      in<1:0>:
+        direction: input
+        net_name: "in<1:0>"
+        num_bits: 2
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: opin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
+    instpins: {}

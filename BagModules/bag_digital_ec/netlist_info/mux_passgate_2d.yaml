@@ -1,0 +1,108 @@
+lib_name: bag_digital_ec
+cell_name: mux_passgate_2d
+pins: [ "VDD", "VSS", "in", "out", "sel" ]
+instances:
+  XDEC0:
+    lib_name: bag_digital_ec
+    cell_name: decoder_diff
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "sel0"
+        num_bits: 1
+      outb:
+        direction: output
+        net_name: "selb0"
+        num_bits: 1
+      in<1:0>:
+        direction: input
+        net_name: "<*2>sel"
+        num_bits: 2
+  XDEC1:
+    lib_name: bag_digital_ec
+    cell_name: decoder_diff
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "sel1"
+        num_bits: 1
+      outb:
+        direction: output
+        net_name: "selb1"
+        num_bits: 1
+      in<1:0>:
+        direction: input
+        net_name: "<*2>sel"
+        num_bits: 2
+  PIN5:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  XCORE:
+    lib_name: bag_digital_ec
+    cell_name: mux_passgate_2d_core
+    instpins:
+      sel0:
+        direction: input
+        net_name: "sel0"
+        num_bits: 1
+      sel1:
+        direction: input
+        net_name: "sel1"
+        num_bits: 1
+      selb1:
+        direction: input
+        net_name: "selb1"
+        num_bits: 1
+      selb0:
+        direction: input
+        net_name: "selb0"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+      in:
+        direction: inputOutput
+        net_name: "in"
+        num_bits: 1

@@ -1,0 +1,56 @@
+lib_name: bag_digital_ec
+cell_name: mux_passgate_core
+pins: [ "VDD", "VSS", "sel", "selb", "in", "out" ]
+instances:
+  XPG:
+    lib_name: bag_digital_ec
+    cell_name: passgate
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      s:
+        direction: inputOutput
+        net_name: "in"
+        num_bits: 1
+      en:
+        direction: input
+        net_name: "sel"
+        num_bits: 1
+      enb:
+        direction: input
+        net_name: "selb"
+        num_bits: 1
+      d:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+  PIN5:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}

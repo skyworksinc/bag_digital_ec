@@ -1,0 +1,92 @@
+lib_name: bag_digital_ec
+cell_name: mux_passgate_2d_core
+pins: [ "VDD", "VSS", "selb0", "sel1", "in", "out", "sel0", "selb1" ]
+instances:
+  XMUX0:
+    lib_name: bag_digital_ec
+    cell_name: mux_passgate_core
+    instpins:
+      selb:
+        direction: input
+        net_name: "selb0"
+        num_bits: 1
+      sel:
+        direction: input
+        net_name: "sel0"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: inputOutput
+        net_name: "mid"
+        num_bits: 1
+      in:
+        direction: inputOutput
+        net_name: "in"
+        num_bits: 1
+  XMUX1:
+    lib_name: bag_digital_ec
+    cell_name: mux_passgate_core
+    instpins:
+      selb:
+        direction: input
+        net_name: "selb1"
+        num_bits: 1
+      sel:
+        direction: input
+        net_name: "sel1"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: inputOutput
+        net_name: "out"
+        num_bits: 1
+      in:
+        direction: inputOutput
+        net_name: "mid"
+        num_bits: 1
+  PIN5:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN7:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN6:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
