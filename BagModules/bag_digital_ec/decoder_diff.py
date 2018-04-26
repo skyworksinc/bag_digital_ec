@@ -53,8 +53,11 @@ class bag_digital_ec__decoder_diff(Module):
             and_term.append({'out': 'out<%d>' % idx,
                              'outb': 'outb<%d>' % idx,
                              in_name: ','.join(self._and_in_name_iter(nin, idx))})
+        and_seg_dict = seg_dict.copy()
+        and_seg_dict['inv'] = and_seg_dict['and_inv']
+        del and_seg_dict['and_inv']
         self.instances['XAND'].design(nin=nin, lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
-                                      seg_dict=seg_dict)
+                                      seg_dict=and_seg_dict)
         self.array_instance('XAND', and_name, and_term)
 
         # design input buffers
