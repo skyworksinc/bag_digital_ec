@@ -61,7 +61,7 @@ class bag_digital_ec__nor(Module):
         for idx in range(nin):
             name_list.append('XP%d' % idx + suf)
             if idx == 0:
-                s_name = 'VSS'
+                s_name = 'VDD'
             else:
                 s_name = ('mid%d' % (idx - 1)) + suf
             if idx == nin - 1:

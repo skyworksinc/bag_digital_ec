@@ -53,7 +53,8 @@ class bag_digital_ec__mux_passgate_2d_core(Module):
             self.rename_pin(base, base + suf)
 
         name_list = ['XMUX0<%d:0>' % (nin1 - 1)]
-        term_list = [{'sel': 'sel0' + suf0, 'selb': 'selb0' + suf0, 'in': in_name, 'out': mid_name}]
+        term_list = [{'sel' + suf0: 'sel0' + suf0, 'selb' + suf0: 'selb0' + suf0,
+                      'in' + suf0: in_name, 'out': mid_name}]
         self.instances['XMUX0'].design(nin=nin0, lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
                                        segp=segp, segn=segn)
         self.array_instance('XMUX0', name_list, term_list=term_list)
