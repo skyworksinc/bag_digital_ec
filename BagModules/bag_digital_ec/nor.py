@@ -47,22 +47,28 @@ class bag_digital_ec__nor(Module):
             raise ValueError('number of segments must be >= 1.')
         if nin < 2:
             raise ValueError('nin must be >= 2.')
-        if nin > 2:
-            raise ValueError('not supported yet.')
-        else:
-            self.instances['XN0'].design(w=wn, l=lch, nf=segn, intent=thn)
-            self.instances['XN1'].design(w=wn, l=lch, nf=segn, intent=thn)
-            if segp == 1:
-                self.instances['XP0'].design(w=wp, l=lch, nf=1, intent=thp)
-                self.instances['XP1'].design(w=wp, l=lch, nf=1, intent=thp)
+
+        if nin != 2:
+            self.rename_pin('in<1:0>', 'in<%d:0>' % (nin - 1))
+
+        name_list = ['XN<%d:0>' % (nin - 1)]
+        term_list = [dict(G='in<%d:0>' % nin - 1)]
+        self.instances['XN'].design(w=wn, l=lch, nf=segn, intent=thn)
+        self.array_instance('XN', name_list, term_list=term_list)
+
+        name_list, term_list = [], []
+        suf = '' if segn == 1 else '<%d:0>' % (segn - 1)
+        for idx in range(nin):
+            name_list.append('XP%d' % idx + suf)
+            if idx == 0:
+                s_name = 'VSS'
             else:
-                self.delete_instance('XP0')
+                s_name = ('mid%d' % (idx - 1)) + suf
+            if idx == nin - 1:
+                d_name = 'out'
+            else:
+                d_name = ('mid%d' % idx) + suf
+            term_list.append(dict(G='in<%d>' % idx, D=d_name, S=s_name))
 
-                # use array notation to denote parallel segments
-                seg_str = '<%d:0>' % (segp - 1)
-                name_list = ['XP0' + seg_str, 'XP1' + seg_str]
-                term_list = [dict(S='VDD', G='in<0>', D='mid' + seg_str),
-                             dict(S='mid' + seg_str, G='in<1>', D='out')]
-
-                self.instances['XP1'].design(w=wp, l=lch, nf=1, intent=thp)
-                self.array_instance('XP1', name_list, term_list=term_list)
+        self.instances['XP'].design(w=wp, l=lch, nf=1, intent=thp)
+        self.array_instance('XP', name_list, term_list=term_list)

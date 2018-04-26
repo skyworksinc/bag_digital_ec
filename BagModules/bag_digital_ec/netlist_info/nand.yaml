@@ -2,7 +2,7 @@ lib_name: bag_digital_ec
 cell_name: nand
 pins: [ "VDD", "VSS", "in<1:0>", "out" ]
 instances:
-  XN0:
+  XN:
     lib_name: BAG_prim
     cell_name: nmos4_standard
     instpins:
@@ -12,7 +12,7 @@ instances:
         num_bits: 1
       D:
         direction: inputOutput
-        net_name: "mid<0>"
+        net_name: "out"
         num_bits: 1
       B:
         direction: inputOutput
@@ -22,47 +22,7 @@ instances:
         direction: inputOutput
         net_name: "in<0>"
         num_bits: 1
-  XN1:
-    lib_name: BAG_prim
-    cell_name: nmos4_standard
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "mid<0>"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "out"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VSS"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "in<1>"
-        num_bits: 1
-  XP1:
-    lib_name: BAG_prim
-    cell_name: pmos4_standard
-    instpins:
-      S:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      D:
-        direction: inputOutput
-        net_name: "out"
-        num_bits: 1
-      B:
-        direction: inputOutput
-        net_name: "VDD"
-        num_bits: 1
-      G:
-        direction: inputOutput
-        net_name: "in<1>"
-        num_bits: 1
-  XP0:
+  XP:
     lib_name: BAG_prim
     cell_name: pmos4_standard
     instpins:
