@@ -29,6 +29,7 @@ class Inverter(StdLaygoTemplate):
         dictionary of optional parameters.  See documentation of
         :class:`bag.layout.template.TemplateBase` for details.
     """
+
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
@@ -130,7 +131,8 @@ class Inverter(StdLaygoTemplate):
         nout_warr = self.connect_to_tracks(nout, tid, min_len_mode=0)
         if out_vm:
             if out_tidx is None:
-                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
+                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
+                                                            half_track=True)
             tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
             out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
             self.add_pin('out', out_warr, show=show_pins)
@@ -175,6 +177,7 @@ class InverterTristate(StdLaygoTemplate):
         dictionary of optional parameters.  See documentation of
         :class:`bag.layout.template.TemplateBase` for details.
     """
+
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
@@ -300,7 +303,8 @@ class InverterTristate(StdLaygoTemplate):
         # connect output
         if out_vm:
             if out_tidx is None:
-                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle, half_track=True)
+                out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
+                                                            half_track=True)
             tid = TrackID(vm_layer, out_tidx, width=tr_w_out_v)
             out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
             self.add_pin('out', out_warr, show=show_pins)
