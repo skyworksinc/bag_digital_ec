@@ -254,3 +254,43 @@ class StdCellTap(StdLaygoTemplate):
         vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
         self.add_pin('VSS', vss_warr, show=show_pins)
         self.add_pin('VDD', vdd_warr, show=show_pins)
+
+
+class StdDigitalTemplate(DigitalBase, metaclass=abc.ABCMeta):
+    """The base class of all standard cell generators.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+
+    @property
+    def sub_columns(self):
+        lch = self.params['config']['lch']
+        grid = self.grid
+        lch_unit = int(round(lch / (grid.layout_unit * grid.resolution)))
+        return self.get_sub_columns(grid.tech_info, lch_unit)
+
+    def add_substrate_tap(self, loc, nx=1):
+        nsub = self._laygo_info.sub_columns
+        params = dict(
+            config=self._row_layout_info['config'],
+            row_layout_info=self._row_layout_info,
+            show_pins=False,
+        )
+        tap_master = self.new_template(params=params, temp_cls=StdCellTap)
+        return self.add_digital_block(tap_master, loc=loc, nx=nx, spx=nsub)

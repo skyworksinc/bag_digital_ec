@@ -7,15 +7,14 @@ from typing import TYPE_CHECKING, Dict, Any, Set
 
 from bag.layout.routing import TrackManager, TrackID
 
-from abs_templates_ec.digital.core import DigitalBase
-
+from .core import StdDigitalTemplate
 from .inv import Inverter, InverterTristate
 
 if TYPE_CHECKING:
     from bag.layout.template import TemplateDB
 
 
-class LatchCK2(DigitalBase):
+class LatchCK2(StdDigitalTemplate):
     """A transmission gate latch with differential clock inputs.
 
     Parameters
@@ -35,7 +34,7 @@ class LatchCK2(DigitalBase):
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        StdDigitalTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
         self._seg_in = None
 
@@ -59,6 +58,7 @@ class LatchCK2(DigitalBase):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
             switch_in='True to switch input track.',
             switch_en='True to switch en track.',
             show_pins='True to draw pin geometries.',
@@ -68,6 +68,7 @@ class LatchCK2(DigitalBase):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            row_layout_info=None,
             switch_in=False,
             switch_en=False,
             show_pins=True,
@@ -224,7 +225,7 @@ class LatchCK2(DigitalBase):
         self._seg_in = seg_t0
 
 
-class DFlipFlopCK2(DigitalBase):
+class DFlipFlopCK2(StdDigitalTemplate):
     """A transmission gate flip-flop with differential clock inputs.
 
     Parameters
@@ -244,7 +245,7 @@ class DFlipFlopCK2(DigitalBase):
 
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
-        DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        StdDigitalTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
         self._seg_in = None
 
@@ -268,6 +269,7 @@ class DFlipFlopCK2(DigitalBase):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             show_pins='True to draw pin geometries.',
         )
@@ -276,6 +278,7 @@ class DFlipFlopCK2(DigitalBase):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            row_layout_info=None,
             sig_locs=None,
             show_pins=True,
         )
@@ -303,6 +306,7 @@ class DFlipFlopCK2(DigitalBase):
         s_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
         seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
         lat_params['seg'] = seg_m
+        lat_params['row_layout_info'] = s_master.row_layout_info
         lat_params['switch_en'] = False
         lat_params['switch_in'] = True
         m_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
