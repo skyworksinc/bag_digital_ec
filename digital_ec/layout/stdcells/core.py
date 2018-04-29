@@ -297,3 +297,19 @@ class StdDigitalTemplate(DigitalBase, metaclass=abc.ABCMeta):
         )
         tap_master = self.new_template(params=params, temp_cls=StdCellTap)
         return self.add_digital_block(tap_master, loc=loc, nx=nx, spx=nsub)
+
+    def fill_space(self, port_cols=None):
+        result = DigitalBase.fill_space(self, port_cols=port_cols)
+
+        if self.laygo_info.draw_boundaries:
+            hm_layer = self.conn_layer + 1
+            tr_w_sup = self.params['config']['tr_w_supply']
+            y0 = self._ybot[1]
+            y1 = y0 + self._row_height * self.digital_size[1]
+            tr0 = self.grid.coord_to_track(hm_layer, y0, unit_mode=True)
+            tr1 = self.grid.coord_to_track(hm_layer, y1, unit_mode=True)
+            bot = self.connect_to_tracks(result[0], TrackID(hm_layer, tr0, width=tr_w_sup))
+            top = self.connect_to_tracks(result[1], TrackID(hm_layer, tr1, width=tr_w_sup))
+            return bot, top, result[2], result[3]
+        else:
+            return result
