@@ -8,7 +8,8 @@ import pkg_resources
 from bag.design import Module
 
 
-yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info', 'inv_chain.yaml'))
+yaml_file = pkg_resources.resource_filename(__name__, os.path.join('netlist_info',
+                                                                   'inv_chain.yaml'))
 
 
 # noinspection PyPep8Naming
@@ -24,30 +25,32 @@ class bag_digital_ec__inv_chain(Module):
     @classmethod
     def get_params_info(cls):
         # type: () -> Dict[str, str]
-        """Returns a dictionary from parameter names to descriptions.
-
-        Returns
-        -------
-        param_info : Optional[Dict[str, str]]
-            dictionary from parameter names to descriptions.
-        """
         return dict(
+            lch='channel length.',
+            wp_list='PMOS widths.',
+            wn_list='NMOS widths.',
+            thp='PMOS threshold.',
+            thn='NMOS threshold.',
+            segp_list='PMOS segments.',
+            segn_list='NMOS segments.',
         )
 
-    def design(self):
-        """To be overridden by subclasses to design this module.
+    def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list):
+        ninv = len(wp_list)
+        name_list, term_list = [], []
+        for idx in range(ninv):
+            name_list.append('XINV%d' % idx)
+            if idx == 0:
+                in_name = 'in'
+            else:
+                in_name = 'mid<%d>' % (idx - 1)
+            if idx == ninv - 1:
+                out_name = 'out'
+            else:
+                out_name = 'mid<%d>' % idx
+            term_list.append({'in': in_name, 'out': out_name})
 
-        This method should fill in values for all parameters in
-        self.parameters.  To design instances of this module, you can
-        call their design() method or any other ways you coded.
-
-        To modify schematic structure, call:
-
-        rename_pin()
-        delete_instance()
-        replace_instance_master()
-        reconnect_instance_terminal()
-        restore_instance()
-        array_instance()
-        """
-        pass
+        self.array_instance('XINV', name_list, term_list=term_list)
+        for wp, wn, segp, segn in zip(wp_list, wn_list, segp_list, segn_list):
+            self.instances['XINV'][0].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
+                                             segp=segp, segn=segn)
