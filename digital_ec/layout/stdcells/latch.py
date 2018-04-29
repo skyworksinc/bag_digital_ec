@@ -53,11 +53,11 @@ class LatchCK2(StdDigitalTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             switch_in='True to switch input track.',
             switch_en='True to switch en track.',
@@ -68,6 +68,8 @@ class LatchCK2(StdDigitalTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp=None,
+            wn=None,
             row_layout_info=None,
             switch_in=False,
             switch_en=False,
@@ -80,36 +82,42 @@ class LatchCK2(StdDigitalTemplate):
         fb_fanout = 8
 
         config = self.params['config']
-        wp = self.params['wp']
-        wn = self.params['wn']
+
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        wp = self.params['wp']
+        wn = self.params['wn']
         switch_in = self.params['switch_in']
         switch_en = self.params['switch_en']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
         wn_row = config['wn']
-
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
         # make masters
-        sub_params = self.params.copy()
-        sub_params['show_pins'] = False
-        sub_params['sig_locs'] = None
-        sub_params['out_vm'] = True
-        inv_master = self.new_template(params=sub_params, temp_cls=Inverter)
+        params = self.params.copy()
+        params['wp'] = wp
+        params['wn'] = wn
+        params['show_pins'] = False
+        params['sig_locs'] = None
+        params['out_vm'] = True
+        inv_master = self.new_template(params=params, temp_cls=Inverter)
         row_layout_info = inv_master.row_layout_info
         seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
-        sub_params['seg'] = seg_t0
-        sub_params['row_layout_info'] = row_layout_info
-        sub_params['out_vm'] = False
-        t0_master = self.new_template(params=sub_params, temp_cls=InverterTristate)
+        params['seg'] = seg_t0
+        params['row_layout_info'] = row_layout_info
+        params['out_vm'] = False
+        t0_master = self.new_template(params=params, temp_cls=InverterTristate)
         seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
-        sub_params['seg'] = seg_t1
-        t1_master = self.new_template(params=sub_params, temp_cls=InverterTristate)
+        params['seg'] = seg_t1
+        t1_master = self.new_template(params=params, temp_cls=InverterTristate)
 
         # setup floorplan
         t0_ncol = t0_master.num_cols
@@ -264,11 +272,11 @@ class DFlipFlopCK2(StdDigitalTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             show_pins='True to draw pin geometries.',
@@ -278,6 +286,8 @@ class DFlipFlopCK2(StdDigitalTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp=None,
+            wn=None,
             row_layout_info=None,
             sig_locs=None,
             show_pins=True,
@@ -294,12 +304,17 @@ class DFlipFlopCK2(StdDigitalTemplate):
 
         wp_row = config['wp']
         wn_row = config['wn']
-
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
         # make masters
         lat_params = self.params.copy()
+        lat_params['wp'] = wp
+        lat_params['wn'] = wn
         lat_params['show_pins'] = False
         lat_params['sig_locs'] = None
         lat_params['switch_en'] = True

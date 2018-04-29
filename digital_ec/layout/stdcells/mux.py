@@ -45,11 +45,11 @@ class Passgate(StdLaygoTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             show_pins='True to draw pin geometries.',
         )
@@ -58,23 +58,28 @@ class Passgate(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp=None,
+            wn=None,
             row_layout_info=None,
             show_pins=True,
         )
 
     def draw_layout(self):
         config = self.params['config']
-        wp = self.params['wp']
-        wn = self.params['wn']
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        wp = self.params['wp']
+        wn = self.params['wn']
         row_layout_info = self.params['row_layout_info']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
         wn_row = config['wn']
-
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
         if seg % 2 != 0:

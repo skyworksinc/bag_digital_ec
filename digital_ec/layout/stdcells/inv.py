@@ -45,11 +45,11 @@ class Inverter(StdLaygoTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
@@ -60,6 +60,8 @@ class Inverter(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp=None,
+            wn=None,
             row_layout_info=None,
             sig_locs=None,
             out_vm=True,
@@ -80,7 +82,10 @@ class Inverter(StdLaygoTemplate):
 
         wp_row = config['wp']
         wn_row = config['wn']
-
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
@@ -196,11 +201,11 @@ class InverterTristate(StdLaygoTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
@@ -211,6 +216,8 @@ class InverterTristate(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp=None,
+            wn=None,
             row_layout_info=None,
             sig_locs=None,
             out_vm=True,
@@ -219,11 +226,11 @@ class InverterTristate(StdLaygoTemplate):
 
     def draw_layout(self):
         config = self.params['config']
-        wp = self.params['wp']
-        wn = self.params['wn']
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        wp = self.params['wp']
+        wn = self.params['wn']
         row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
         out_vm = self.params['out_vm']
@@ -231,7 +238,10 @@ class InverterTristate(StdLaygoTemplate):
 
         wp_row = config['wp']
         wn_row = config['wn']
-
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
@@ -373,11 +383,11 @@ class InvChain(StdLaygoTemplate):
         # type: () -> Dict[str, str]
         return dict(
             config='laygo configuration dictionary.',
-            wp='pmos widths.',
-            wn='nmos widths.',
             seg_list='list of number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            wp_list='list of PMOS widths.',
+            wn_list='list of NMOS widths.',
             row_layout_info='Row layout information dictionary.',
             show_pins='True to draw pin geometries.',
         )
@@ -386,26 +396,36 @@ class InvChain(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            wp_list=None,
+            wn_list=None,
             row_layout_info=None,
             show_pins=True,
         )
 
     def draw_layout(self):
         config = self.params['config']
-        row_layout_info = self.params['row_layout_info']
-        wp = self.params['wp']
-        wn = self.params['wn']
         seg_list = self.params['seg_list']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        wp_list = self.params['wp_list']
+        wn_list = self.params['wn_list']
+        row_layout_info = self.params['row_layout_info']
         show_pins = self.params['show_pins']
 
+        ninv = len(seg_list)
         wp_row = config['wp']
         wn_row = config['wn']
+        if wp_list is None:
+            wp_list = [wp_row] * ninv
+        elif len(wp_list) != ninv:
+            raise ValueError('length of wp_list != %d' % ninv)
+        if wn_list is None:
+            wn_list = [wn_row] * ninv
+        elif len(wn_list) != ninv:
+            raise ValueError('length of wn_list != %d' % ninv)
 
-        if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
-            raise ValueError('Invalid choice of wp and/or wn.')
-        if len(seg_list) != 2:
+        # TODO: remove restriction
+        if ninv != 2:
             raise ValueError('Now only 2 inverters are supported.')
 
         seg_in, seg_out = seg_list
@@ -430,10 +450,10 @@ class InvChain(StdLaygoTemplate):
         pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
 
         # add blocks and collect wires
-        pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp)
-        ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn)
-        pinv1 = self.add_laygo_mos(1, seg_in, seg_out, w=wp)
-        ninv1 = self.add_laygo_mos(0, seg_in, seg_out, w=wn)
+        pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp_list[0])
+        ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn_list[0])
+        pinv1 = self.add_laygo_mos(1, seg_in, seg_out, w=wp_list[1])
+        ninv1 = self.add_laygo_mos(0, seg_in, seg_out, w=wn_list[1])
 
         # compute overall block size and fill spaces
         self.fill_space()
@@ -471,10 +491,10 @@ class InvChain(StdLaygoTemplate):
         # set properties
         self._sch_params = dict(
             lch=config['lch'],
-            wp=wp,
-            wn=wn,
             thp=config['thp'],
             thn=config['thn'],
             segp_list=seg_list,
             segn_list=seg_list,
+            wp_list=wp_list,
+            wn_list=wn_list,
         )
