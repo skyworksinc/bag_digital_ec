@@ -100,8 +100,10 @@ class LatchCK2(DigitalBase):
         sub_params['sig_locs'] = None
         sub_params['out_vm'] = True
         inv_master = self.new_template(params=sub_params, temp_cls=Inverter)
+        row_layout_info = inv_master.row_layout_info
         seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
         sub_params['seg'] = seg_t0
+        sub_params['row_layout_info'] = row_layout_info
         sub_params['out_vm'] = False
         t0_master = self.new_template(params=sub_params, temp_cls=InverterTristate)
         seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
@@ -113,7 +115,7 @@ class LatchCK2(DigitalBase):
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
         num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
-        self.initialize(inv_master.row_layout_info, 1, num_cols=num_cols)
+        self.initialize(row_layout_info, 1, num_cols=num_cols)
 
         # change masters
         hm_layer = self.conn_layer + 1

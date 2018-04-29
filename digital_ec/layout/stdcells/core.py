@@ -129,47 +129,52 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         LaygoBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
 
-    def setup_floorplan(self, config, num_col, debug=False):
-        # type: (Dict[str, Any], int, bool) -> Tuple[TrackID, TrackID]
+    def setup_floorplan(self, config, row_layout_info, num_col, debug=False):
+        # type: (Dict[str, Any], Dict[str, Any], int, bool) -> Tuple[TrackID, TrackID]
         """draw the standard cell floorplan.
         """
-        wp_row = config['wp']
-        wn_row = config['wn']
-        thp = config['thp']
-        thn = config['thn']
-        row_kwargs = config['row_kwargs']
-        num_g_tracks = config['ng_tracks']
-        num_gb_tracks = config['ngb_tracks']
-        num_ds_tracks = config['nds_tracks']
         tr_w_sup = config['tr_w_supply']
 
-        if len(num_g_tracks) != 2 or len(num_gb_tracks) != 2 or len(num_ds_tracks) != 2:
-            raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
-
-        # get row information
-        row_list = ['nch', 'pch']
-        orient_list = ['MX', 'R0']
-        thres_list = [thn, thp]
-        w_list = [wn_row, wp_row]
-
-        # take supply width and spacing into account.
-        hm_layer = self.conn_layer + 1
-        sp_sup = self.grid.get_num_space_tracks(hm_layer, tr_w_sup, half_space=True)
-        inc = int(round(2 * sp_sup + tr_w_sup))
-        if inc % 2 == 0:
-            inc = inc // 2
-        else:
-            inc = inc / 2
-
-        if debug:
-            print('num_track increment for supply: %s' % inc)
-        num_gb_tracks = [ntr + inc for ntr in num_gb_tracks]
-        num_ds_tracks = [ntr + inc for ntr in num_ds_tracks]
-
         # specify row types
-        self.set_row_types(row_list, w_list, orient_list, thres_list, False, 0,
-                           num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
-                           row_kwargs=row_kwargs, num_col=num_col)
+        hm_layer = self.conn_layer + 1
+        if row_layout_info is not None:
+            self.set_rows_direct(row_layout_info, num_col=num_col,
+                                 draw_boundaries=False, end_mode=0)
+        else:
+            wp_row = config['wp']
+            wn_row = config['wn']
+            thp = config['thp']
+            thn = config['thn']
+            row_kwargs = config['row_kwargs']
+            num_g_tracks = config['ng_tracks']
+            num_gb_tracks = config['ngb_tracks']
+            num_ds_tracks = config['nds_tracks']
+
+            if len(num_g_tracks) != 2 or len(num_gb_tracks) != 2 or len(num_ds_tracks) != 2:
+                raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
+
+            # get row information
+            row_list = ['nch', 'pch']
+            orient_list = ['MX', 'R0']
+            thres_list = [thn, thp]
+            w_list = [wn_row, wp_row]
+
+            # take supply width and spacing into account.
+            sp_sup = self.grid.get_num_space_tracks(hm_layer, tr_w_sup, half_space=True)
+            inc = int(round(2 * sp_sup + tr_w_sup))
+            if inc % 2 == 0:
+                inc = inc // 2
+            else:
+                inc = inc / 2
+
+            if debug:
+                print('num_track increment for supply: %s' % inc)
+            num_gb_tracks = [ntr + inc for ntr in num_gb_tracks]
+            num_ds_tracks = [ntr + inc for ntr in num_ds_tracks]
+
+            self.set_row_types(row_list, w_list, orient_list, thres_list, False, 0,
+                               num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
+                               row_kwargs=row_kwargs, num_col=num_col)
 
         if debug:
             for row_idx, row_name in [(0, 'nch'), (1, 'pch')]:
@@ -186,3 +191,66 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
         vdd_tid = TrackID(hm_layer, self.grid.coord_to_track(hm_layer, self.bound_box.top_unit,
                                                              unit_mode=True), width=tr_w_sup)
         return vss_tid, vdd_tid
+
+
+class StdCellTap(StdLaygoTemplate):
+    """A standard cell substrate tap.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **kwargs) -> None
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+
+    @classmethod
+    def get_params_info(cls):
+        # type: () -> Dict[str, str]
+        return dict(
+            config='laygo configuration dictionary.',
+            row_layout_info='Row layout information dictionary.',
+            show_pins='True to draw pin geometries.',
+        )
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            row_layout_info=None,
+            show_pins=True,
+        )
+
+    def draw_layout(self):
+        """Draw the layout of a dynamic latch chain.
+        """
+        config = self.params['config']
+        row_layout_info = self.params['row_layout_info']
+        show_pins = self.params['show_pins']
+
+        seg = self.laygo_info.sub_columns
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg)
+
+        ptap_ports = self.add_laygo_mos(0, 0, seg, is_sub=True)
+        ntap_ports = self.add_laygo_mos(1, 0, seg, is_sub=True)
+
+        self.fill_space()
+
+        # connect supplies
+        vss = ptap_ports['VSS_d']
+        vdd = ntap_ports['VDD_d']
+        vss_warr = self.connect_to_tracks(vss, vss_tid)
+        vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
+        self.add_pin('VSS', vss_warr, show=show_pins)
+        self.add_pin('VDD', vdd_warr, show=show_pins)

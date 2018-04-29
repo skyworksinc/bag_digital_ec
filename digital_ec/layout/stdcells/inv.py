@@ -50,6 +50,7 @@ class Inverter(StdLaygoTemplate):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
             show_pins='True to draw pin geometries.',
@@ -59,6 +60,7 @@ class Inverter(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            row_layout_info=None,
             sig_locs=None,
             out_vm=True,
             show_pins=True,
@@ -66,6 +68,7 @@ class Inverter(StdLaygoTemplate):
 
     def draw_layout(self):
         config = self.params['config']
+        row_layout_info = self.params['row_layout_info']
         wp = self.params['wp']
         wn = self.params['wn']
         seg = self.params['seg']
@@ -88,7 +91,7 @@ class Inverter(StdLaygoTemplate):
         nout_tidx = sig_locs.get('nout', None)
         out_tidx = sig_locs.get('out', None)
 
-        vss_tid, vdd_tid = self.setup_floorplan(config, seg)
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg)
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
@@ -198,6 +201,7 @@ class InverterTristate(StdLaygoTemplate):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
             show_pins='True to draw pin geometries.',
@@ -207,6 +211,7 @@ class InverterTristate(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            row_layout_info=None,
             sig_locs=None,
             out_vm=True,
             show_pins=True,
@@ -219,6 +224,7 @@ class InverterTristate(StdLaygoTemplate):
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
         out_vm = self.params['out_vm']
         show_pins = self.params['show_pins']
@@ -229,7 +235,7 @@ class InverterTristate(StdLaygoTemplate):
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
 
-        vss_tid, vdd_tid = self.setup_floorplan(config, seg * 2)
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg * 2)
 
         if sig_locs is None:
             sig_locs = {}

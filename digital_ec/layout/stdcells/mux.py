@@ -50,6 +50,7 @@ class Passgate(StdLaygoTemplate):
             seg='number of segments.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -57,6 +58,7 @@ class Passgate(StdLaygoTemplate):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            row_layout_info=None,
             show_pins=True,
         )
 
@@ -67,6 +69,7 @@ class Passgate(StdLaygoTemplate):
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        row_layout_info = self.params['row_layout_info']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -77,7 +80,7 @@ class Passgate(StdLaygoTemplate):
         if seg % 2 != 0:
             raise ValueError('seg = %d must be even.' % seg)
 
-        vss_tid, vdd_tid = self.setup_floorplan(config, seg)
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg)
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
