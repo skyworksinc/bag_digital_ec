@@ -246,12 +246,15 @@ class StdCellTap(StdLaygoTemplate):
         ntap_ports = self.add_laygo_mos(1, 0, seg, is_sub=True)
 
         self.fill_space()
+        xr = self.bound_box.right_unit
 
         # connect supplies
-        vss = ptap_ports['VSS_d']
-        vdd = ntap_ports['VDD_d']
-        vss_warr = self.connect_to_tracks(vss, vss_tid)
-        vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
+        vss = ptap_ports['VSS_s']
+        vdd = ntap_ports['VDD_s']
+        vss_warr = self.connect_to_tracks(vss, vss_tid, track_lower=0, track_upper=xr,
+                                          unit_mode=True)
+        vdd_warr = self.connect_to_tracks(vdd, vdd_tid, track_lower=0, track_upper=xr,
+                                          unit_mode=True)
         self.add_pin('VSS', vss_warr, show=show_pins)
         self.add_pin('VDD', vdd_warr, show=show_pins)
 
