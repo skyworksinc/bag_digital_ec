@@ -338,3 +338,143 @@ class InverterTristate(StdLaygoTemplate):
             segp=seg,
             segn=seg,
         )
+
+
+class InvChain(StdLaygoTemplate):
+    """An inverter chain.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
+
+    @classmethod
+    def get_params_info(cls):
+        # type: () -> Dict[str, str]
+        return dict(
+            config='laygo configuration dictionary.',
+            wp='pmos widths.',
+            wn='nmos widths.',
+            seg_list='list of number of segments.',
+            tr_widths='Track width dictionary.',
+            tr_spaces='Track spacing dictionary.',
+            row_layout_info='Row layout information dictionary.',
+            show_pins='True to draw pin geometries.',
+        )
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            row_layout_info=None,
+            show_pins=True,
+        )
+
+    def draw_layout(self):
+        config = self.params['config']
+        row_layout_info = self.params['row_layout_info']
+        wp = self.params['wp']
+        wn = self.params['wn']
+        seg_list = self.params['seg_list']
+        tr_widths = self.params['tr_widths']
+        tr_spaces = self.params['tr_spaces']
+        show_pins = self.params['show_pins']
+
+        wp_row = config['wp']
+        wn_row = config['wn']
+
+        if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
+            raise ValueError('Invalid choice of wp and/or wn.')
+        if len(seg_list) != 2:
+            raise ValueError('Now only 2 inverters are supported.')
+
+        seg_in, seg_out = seg_list
+        seg_tot = seg_in + seg_out
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg_tot)
+
+        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
+
+        # get track information
+        hm_layer = self.conn_layer + 1
+        vm_layer = hm_layer + 1
+        hm_w_g = tr_manager.get_width(hm_layer, 'in')
+        hm_w_d = tr_manager.get_width(hm_layer, 'out')
+        vm_w_d = tr_manager.get_width(vm_layer, 'out')
+        g_locs = tr_manager.place_wires(hm_layer, ['in', 'in'])[1]
+        d_locs = tr_manager.place_wires(hm_layer, ['out', 'out'])[1]
+        ng0_tid = self.make_track_id(0, 'g', g_locs[0], width=hm_w_g)
+        pg0_tid = self.make_track_id(1, 'g', g_locs[0], width=hm_w_g)
+        nd0_tid = self.make_track_id(0, 'gb', d_locs[0], width=hm_w_d)
+        nd1_tid = self.make_track_id(0, 'gb', d_locs[1], width=hm_w_d)
+        pd0_tid = self.make_track_id(1, 'gb', d_locs[0], width=hm_w_d)
+        pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
+
+        # add blocks and collect wires
+        pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp)
+        ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn)
+        pinv1 = self.add_laygo_mos(1, seg_in, seg_out, w=wp)
+        ninv1 = self.add_laygo_mos(0, seg_in, seg_out, w=wn)
+
+        # compute overall block size and fill spaces
+        self.fill_space()
+
+        # connect input
+        in_warr = self.connect_to_tracks([pinv0['g'], ninv0['g']], ng0_tid, min_len_mode=0)
+        self.add_pin('in', in_warr, show=show_pins)
+
+        # connect output
+        pout_warr = self.connect_to_tracks(pinv1['d'], pd0_tid, min_len_mode=0)
+        nout_warr = self.connect_to_tracks(ninv1['d'], nd0_tid, min_len_mode=0)
+        out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
+                                                    half_track=True)
+        tid = TrackID(vm_layer, out_tidx, width=vm_w_d)
+        out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
+        self.add_pin('out', out_warr, show=show_pins)
+
+        # connect middle
+        pout_warr = self.connect_to_tracks(pinv0['d'], pd1_tid, min_len_mode=0)
+        nout_warr = self.connect_to_tracks(ninv0['d'], nd1_tid, min_len_mode=0)
+        mid_warr = self.connect_to_tracks([pinv1['g'], ninv1['g']], pg0_tid, min_len_mode=-1)
+        mid_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
+                                                    half_track=True)
+        tid = TrackID(vm_layer, mid_tidx, width=vm_w_d)
+        self.connect_to_tracks([pout_warr, nout_warr, mid_warr], tid)
+
+        # connect supplies
+        vdd = [pinv0['s'], pinv1['s']]
+        vss = [ninv0['s'], ninv1['s']]
+        vss_warr = self.connect_to_tracks(vss, vss_tid)
+        vdd_warr = self.connect_to_tracks(vdd, vdd_tid)
+        self.add_pin('VSS', vss_warr, show=show_pins)
+        self.add_pin('VDD', vdd_warr, show=show_pins)
+
+        # set properties
+        self._sch_params = dict(
+            lch=config['lch'],
+            wp=wp,
+            wn=wn,
+            thp=config['thp'],
+            thn=config['thn'],
+            segp_list=seg_list,
+            segn_list=seg_list,
+        )
