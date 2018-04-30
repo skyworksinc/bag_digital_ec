@@ -51,6 +51,6 @@ class bag_digital_ec__inv_chain(Module):
             term_list.append({'in': in_name, 'out': out_name})
 
         self.array_instance('XINV', name_list, term_list=term_list)
-        for wp, wn, segp, segn in zip(wp_list, wn_list, segp_list, segn_list):
-            self.instances['XINV'][0].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
-                                             segp=segp, segn=segn)
+        for idx, (wp, wn, segp, segn) in enumerate(zip(wp_list, wn_list, segp_list, segn_list)):
+            self.instances['XINV'][idx].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
+                                               segp=segp, segn=segn)
