@@ -57,7 +57,7 @@ class bag_digital_ec__nor(Module):
         self.array_instance('XN', name_list, term_list=term_list)
 
         name_list, term_list = [], []
-        suf = '' if segn == 1 else '<%d:0>' % (segn - 1)
+        suf = '' if segp == 1 else '<%d:0>' % (segp - 1)
         for idx in range(nin):
             name_list.append('XP%d' % idx + suf)
             if idx == 0:
