@@ -59,8 +59,7 @@ class LatchCK2(StdDigitalTemplate):
             wp='pmos width.',
             wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
-            switch_in='True to switch input track.',
-            switch_en='True to switch en track.',
+            sig_locs='Signal track location dictionary.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -71,8 +70,7 @@ class LatchCK2(StdDigitalTemplate):
             wp=None,
             wn=None,
             row_layout_info=None,
-            switch_in=False,
-            switch_en=False,
+            sig_locs=None,
             show_pins=True,
         )
 
@@ -88,8 +86,8 @@ class LatchCK2(StdDigitalTemplate):
         tr_spaces = self.params['tr_spaces']
         wp = self.params['wp']
         wn = self.params['wn']
-        switch_in = self.params['switch_in']
-        switch_en = self.params['switch_en']
+        row_layout_info = self.params['row_layout_info']
+        sig_locs = self.params['sig_locs']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -100,71 +98,76 @@ class LatchCK2(StdDigitalTemplate):
             wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
+        if sig_locs is None:
+            sig_locs = {}
 
-        # make masters
+        # setup floorplan
         params = self.params.copy()
         params['wp'] = wp
         params['wn'] = wn
         params['show_pins'] = False
         params['sig_locs'] = None
         params['out_vm'] = True
-        inv_master = self.new_template(params=params, temp_cls=Inverter)
-        row_layout_info = inv_master.row_layout_info
-        seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
-        params['seg'] = seg_t0
-        params['row_layout_info'] = row_layout_info
-        params['out_vm'] = False
-        t0_master = self.new_template(params=params, temp_cls=InverterTristate)
-        seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
-        params['seg'] = seg_t1
-        t1_master = self.new_template(params=params, temp_cls=InverterTristate)
+        if row_layout_info is not None:
+            self.initialize(row_layout_info, 1)
+        else:
+            inv_master = self.new_template(params=params, temp_cls=Inverter)
+            params['row_layout_info'] = row_layout_info = inv_master.row_layout_info
+            self.initialize(row_layout_info, 1)
 
-        # setup floorplan
-        t0_ncol = t0_master.num_cols
-        t1_ncol = t1_master.num_cols
-        inv_ncol = inv_master.num_cols
-        num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
-        self.initialize(row_layout_info, 1, num_cols=num_cols)
-
-        # change masters
+        # compute track locations
         hm_layer = self.conn_layer + 1
         ym_layer = hm_layer + 1
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
-        hm_w_g = tr_manager.get_width(hm_layer, 'in')
-        hm_w_d = tr_manager.get_width(hm_layer, 'out')
         ym_w_in = tr_manager.get_width(ym_layer, 'in')
         g_locs = tr_manager.place_wires(hm_layer, ['in', 'in'])[1]
         d_locs = tr_manager.place_wires(hm_layer, ['out', 'out'])[1]
-        ng0_tid = self.make_track_id(0, 'g', g_locs[0], width=hm_w_g)
-        ng1_tid = self.make_track_id(0, 'g', g_locs[1], width=hm_w_g)
-        pg0_tid = self.make_track_id(1, 'g', g_locs[0], width=hm_w_g)
-        pg1_tid = self.make_track_id(1, 'g', g_locs[1], width=hm_w_g)
-        nd0_tid = self.make_track_id(0, 'gb', d_locs[0], width=hm_w_d)
-        nd1_tid = self.make_track_id(0, 'gb', d_locs[1], width=hm_w_d)
-        pd0_tid = self.make_track_id(1, 'gb', d_locs[0], width=hm_w_d)
-        pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
+        ng0_tidx = self.get_track_index(0, 'g', g_locs[0])
+        ng1_tidx = self.get_track_index(0, 'g', g_locs[1])
+        pg0_tidx = self.get_track_index(1, 'g', g_locs[0])
+        pg1_tidx = self.get_track_index(1, 'g', g_locs[1])
+        nd0_tidx = self.get_track_index(0, 'gb', d_locs[0])
+        nd1_tidx = self.get_track_index(0, 'gb', d_locs[1])
+        pd0_tidx = self.get_track_index(1, 'gb', d_locs[0])
+        pd1_tidx = self.get_track_index(1, 'gb', d_locs[1])
 
+        t0_in_tidx = sig_locs.get('in', pg1_tidx)
+        t0_enb_tidx = sig_locs.get('pclkb', pg0_tidx)
+        t0_en_tidx = sig_locs.get('nclk', ng0_tidx)
+        t1_en_tidx = sig_locs.get('nclkb', ng1_tidx)
+
+        """
         if switch_in:
             t0_in_tid, t0_enb_tid = pg0_tid, pg1_tid
         else:
             t0_in_tid, t0_enb_tid = pg1_tid, pg0_tid
         if switch_en:
             t0_en_tid, t1_en_tid = ng1_tid, ng0_tid
-
         else:
             t0_en_tid, t1_en_tid = ng0_tid, ng1_tid
+        """
 
-        sub_sig_locs = {'in': t0_en_tid.base_index, 'pout': pd1_tid.base_index,
-                        'nout': nd1_tid.base_index}
-        inv_master = inv_master.new_template_with(sig_locs=sub_sig_locs)
-        sub_sig_locs = {'in': t0_enb_tid.base_index, 'pout': pd0_tid.base_index,
-                        'nout': nd0_tid.base_index, 'en': t1_en_tid.base_index,
-                        'enb': t0_in_tid.base_index}
-        t1_master = t1_master.new_template_with(sig_locs=sub_sig_locs)
-        sub_sig_locs = {'in': t0_in_tid.base_index, 'pout': pd0_tid.base_index,
-                        'nout': nd0_tid.base_index, 'en': t0_en_tid.base_index,
-                        'enb': t0_enb_tid.base_index}
-        t0_master = t0_master.new_template_with(sig_locs=sub_sig_locs)
+        # make masters
+        params['sig_locs'] = {'in': t0_en_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx}
+        inv_master = self.new_template(params=params, temp_cls=Inverter)
+        seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
+        params['seg'] = seg_t0
+        params['out_vm'] = False
+        params['sig_locs'] = {'in': t0_in_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
+                              'en': t0_en_tidx, 'enb': t0_enb_tidx}
+        t0_master = self.new_template(params=params, temp_cls=InverterTristate)
+        seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
+        params['seg'] = seg_t1
+        params['sig_locs'] = {'in': t0_enb_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
+                              'en': t1_en_tidx, 'enb': t0_in_tidx}
+        t1_master = self.new_template(params=params, temp_cls=InverterTristate)
+
+        # set size
+        t0_ncol = t0_master.num_cols
+        t1_ncol = t1_master.num_cols
+        inv_ncol = inv_master.num_cols
+        num_cols = t0_ncol + t1_ncol + inv_ncol + blk_sp * 2
+        self.set_digital_size(num_cols)
 
         # add instances
         t1_col = t0_ncol + blk_sp
@@ -298,8 +301,12 @@ class DFlipFlopCK2(StdDigitalTemplate):
         fanout = 4
 
         config = self.params['config']
+        tr_widths = self.params['tr_widths']
+        tr_spaces = self.params['tr_spaces']
         wp = self.params['wp']
         wn = self.params['wn']
+        row_layout_info = self.params['row_layout_info']
+        sig_locs = self.params['sig_locs']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -310,27 +317,47 @@ class DFlipFlopCK2(StdDigitalTemplate):
             wn = wn_row
         if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
             raise ValueError('Invalid choice of wp and/or wn.')
-
-        # make masters
-        lat_params = self.params.copy()
-        lat_params['wp'] = wp
-        lat_params['wn'] = wn
-        lat_params['show_pins'] = False
-        lat_params['sig_locs'] = None
-        lat_params['switch_en'] = True
-        s_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
-        seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
-        lat_params['seg'] = seg_m
-        lat_params['row_layout_info'] = s_master.row_layout_info
-        lat_params['switch_en'] = False
-        lat_params['switch_in'] = True
-        m_master = self.new_template(params=lat_params, temp_cls=LatchCK2)
+        if sig_locs is None:
+            sig_locs = {}
 
         # setup floorplan
+        params = self.params.copy()
+        params['wp'] = wp
+        params['wn'] = wn
+        params['show_pins'] = False
+        params['sig_locs'] = None
+        if row_layout_info is not None:
+            self.initialize(row_layout_info, 1)
+        else:
+            m_master = self.new_template(params=params, temp_cls=LatchCK2)
+            params['row_layout_info'] = row_layout_info = m_master.row_layout_info
+            self.initialize(row_layout_info, 1)
+
+        # compute track locations
+        hm_layer = self.conn_layer + 1
+        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
+        g_locs = tr_manager.place_wires(hm_layer, ['in', 'in'])[1]
+        ng0_tidx = self.get_track_index(0, 'g', g_locs[0])
+        ng1_tidx = self.get_track_index(0, 'g', g_locs[1])
+        pg0_tidx = self.get_track_index(1, 'g', g_locs[0])
+        pg1_tidx = self.get_track_index(1, 'g', g_locs[1])
+
+        in_tidx = sig_locs.get('in', pg0_tidx)
+        pclkb_tidx = sig_locs.get('pclkb', pg1_tidx)
+
+        # make masters
+        params['sig_locs'] = {'nclk': ng1_tidx, 'nclkb': ng0_tidx}
+        s_master = self.new_template(params=params, temp_cls=LatchCK2)
+        seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
+        params['seg'] = seg_m
+        params['sig_locs'] = {'in': in_tidx, 'pclkb': pclkb_tidx}
+        m_master = self.new_template(params=params, temp_cls=LatchCK2)
+
+        # set size
         m_ncol = m_master.num_cols
         s_ncol = s_master.num_cols
         num_cols = m_ncol + s_ncol + blk_sp
-        self.initialize(m_master.row_layout_info, 1, num_cols=num_cols)
+        self.set_digital_size(num_cols)
 
         # add instances
         s_col = m_ncol + blk_sp
