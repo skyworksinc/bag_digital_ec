@@ -136,17 +136,6 @@ class LatchCK2(StdDigitalTemplate):
         t0_en_tidx = sig_locs.get('nclk', ng0_tidx)
         t1_en_tidx = sig_locs.get('nclkb', ng1_tidx)
 
-        """
-        if switch_in:
-            t0_in_tid, t0_enb_tid = pg0_tid, pg1_tid
-        else:
-            t0_in_tid, t0_enb_tid = pg1_tid, pg0_tid
-        if switch_en:
-            t0_en_tid, t1_en_tid = ng1_tid, ng0_tid
-        else:
-            t0_en_tid, t1_en_tid = ng0_tid, ng1_tid
-        """
-
         # make masters
         params['sig_locs'] = {'in': t0_en_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx}
         inv_master = self.new_template(params=params, temp_cls=Inverter)
