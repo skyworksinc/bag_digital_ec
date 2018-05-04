@@ -135,6 +135,7 @@ class LatchCK2(StdDigitalTemplate):
         t0_enb_tidx = sig_locs.get('pclkb', pg0_tidx)
         t0_en_tidx = sig_locs.get('nclk', ng0_tidx)
         t1_en_tidx = sig_locs.get('nclkb', ng1_tidx)
+        clk_tidx = sig_locs.get('clk', None)
 
         # make masters
         params['sig_locs'] = {'in': t0_en_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx}
@@ -196,7 +197,9 @@ class LatchCK2(StdDigitalTemplate):
         # connect clocks
         clk_col = t1_col + 1
         clkb_col = t1_col - blk_sp - 1
-        clk_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clk_col), width=ym_w_in)
+        if clk_tidx is None:
+            clk_tidx = lay_info.col_to_track(ym_layer, clk_col)
+        clk_tid = TrackID(ym_layer, clk_tidx, width=ym_w_in)
         clkb_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clkb_col), width=ym_w_in)
         t0_en = t0.get_pin('en')
         t0_enb = t0.get_pin('enb')
@@ -208,10 +211,10 @@ class LatchCK2(StdDigitalTemplate):
         clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
         self.add_pin('clkb', clkb, show=show_pins)
-        self.add_pin('t0_enb', t0_enb, label='clkb', show=False)
-        self.add_pin('t0_en', t0_en, label='clk', show=False)
-        self.add_pin('t1_enb', t1_enb, label='clk', show=False)
-        self.add_pin('t1_en', t1_en, label='clkb', show=False)
+        self.add_pin('pclkb', t0_enb, label='clkb', show=False)
+        self.add_pin('nclk', t0_en, label='clk', show=False)
+        self.add_pin('pclk', t1_enb, label='clk', show=False)
+        self.add_pin('nclkb', t1_en, label='clkb', show=False)
 
         # set properties
         self._sch_params = dict(
@@ -339,7 +342,7 @@ class DFlipFlopCK2(StdDigitalTemplate):
         s_master = self.new_template(params=params, temp_cls=LatchCK2)
         seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
         params['seg'] = seg_m
-        params['sig_locs'] = {'in': in_tidx, 'pclkb': pclkb_tidx}
+        params['sig_locs'] = {'in': in_tidx, 'pclkb': pclkb_tidx, 'clk': sig_locs.get('clkb', None)}
         m_master = self.new_template(params=params, temp_cls=LatchCK2)
 
         # set size
@@ -366,13 +369,14 @@ class DFlipFlopCK2(StdDigitalTemplate):
         # connect intermediate node
         self.connect_wires([s_inst.get_pin('in'), m_inst.get_pin('out_hm')])
         # connect clocks
-        self.connect_wires([s_inst.get_pin('t0_en'), m_inst.get_pin('t1_en')])
-        self.connect_wires([s_inst.get_pin('t0_enb'), m_inst.get_pin('t1_enb')])
+        self.connect_wires([s_inst.get_pin('nclk'), m_inst.get_pin('nclkb')])
+        self.connect_wires([s_inst.get_pin('pclkb'), m_inst.get_pin('pclk')])
         # add pins
         self.add_pin('in', m_inst.get_pin('in'), show=show_pins)
         self.add_pin('out', s_inst.get_pin('out'), show=show_pins)
         self.add_pin('clk', m_inst.get_pin('clkb'), show=show_pins)
         self.add_pin('clkb', m_inst.get_pin('clk'), show=show_pins)
+        self.add_pin('clkb_hm', m_inst.get_pin('nclk'), label='clkb', show=show_pins)
 
         # set properties
         self._sch_params = dict(
