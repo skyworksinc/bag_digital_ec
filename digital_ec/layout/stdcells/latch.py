@@ -208,8 +208,8 @@ class LatchCK2(StdDigitalTemplate):
         t0_enb = t0.get_pin('enb')
         t1_en = t1.get_pin('en')
         t1_enb = t1.get_pin('enb')
-        t0_enb = self.extend_wires(t0_enb, min_len_mode=1)
-        t1_enb = self.extend_wires(t1_enb, min_len_mode=-1)
+        t0_enb = self.extend_wires(t0_enb, min_len_mode=1)[0]
+        t1_enb = self.extend_wires(t1_enb, min_len_mode=-1)[0]
         clk = self.connect_to_tracks([t0_en, t1_enb], clk_tid)
         clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
