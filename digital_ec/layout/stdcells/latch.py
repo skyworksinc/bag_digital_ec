@@ -136,6 +136,7 @@ class LatchCK2(StdDigitalTemplate):
         t0_en_tidx = sig_locs.get('nclk', ng0_tidx)
         t1_en_tidx = sig_locs.get('nclkb', ng1_tidx)
         clk_tidx = sig_locs.get('clk', None)
+        clkb_tidx = sig_locs.get('clkb', None)
 
         # make masters
         params['sig_locs'] = {'in': t0_en_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx}
@@ -200,13 +201,15 @@ class LatchCK2(StdDigitalTemplate):
         if clk_tidx is None:
             clk_tidx = lay_info.col_to_track(ym_layer, clk_col)
         clk_tid = TrackID(ym_layer, clk_tidx, width=ym_w_in)
-        clkb_tid = TrackID(ym_layer, lay_info.col_to_track(ym_layer, clkb_col), width=ym_w_in)
+        if clkb_tidx is None:
+            clkb_tidx = lay_info.col_to_track(ym_layer, clkb_col)
+        clkb_tid = TrackID(ym_layer, clkb_tidx, width=ym_w_in)
         t0_en = t0.get_pin('en')
         t0_enb = t0.get_pin('enb')
         t1_en = t1.get_pin('en')
         t1_enb = t1.get_pin('enb')
-        self.extend_wires(t0_enb, min_len_mode=1)
-        self.extend_wires(t1_enb, min_len_mode=-1)
+        t0_enb = self.extend_wires(t0_enb, min_len_mode=1)
+        t1_enb = self.extend_wires(t1_enb, min_len_mode=-1)
         clk = self.connect_to_tracks([t0_en, t1_enb], clk_tid)
         clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
         self.add_pin('clk', clk, show=show_pins)
@@ -342,7 +345,9 @@ class DFlipFlopCK2(StdDigitalTemplate):
         s_master = self.new_template(params=params, temp_cls=LatchCK2)
         seg_m = max(2, int(round(s_master.seg_in / (2 * fanout))) * 2)
         params['seg'] = seg_m
-        params['sig_locs'] = {'in': in_tidx, 'pclkb': pclkb_tidx, 'clk': sig_locs.get('clkb', None)}
+        params['sig_locs'] = {'in': in_tidx, 'pclkb': pclkb_tidx,
+                              'clkb': sig_locs.get('clk', None),
+                              'clk': sig_locs.get('clkb', None)}
         m_master = self.new_template(params=params, temp_cls=LatchCK2)
 
         # set size
@@ -377,6 +382,7 @@ class DFlipFlopCK2(StdDigitalTemplate):
         self.add_pin('clk', m_inst.get_pin('clkb'), show=show_pins)
         self.add_pin('clkb', m_inst.get_pin('clk'), show=show_pins)
         self.add_pin('clkb_hm', m_inst.get_pin('nclk'), label='clkb', show=show_pins)
+        self.add_pin('clk_hm', m_inst.get_pin('nclkb'), label='clk', show=show_pins)
 
         # set properties
         self._sch_params = dict(
