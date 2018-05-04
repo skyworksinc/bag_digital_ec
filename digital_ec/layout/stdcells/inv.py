@@ -388,6 +388,7 @@ class InvChain(StdLaygoTemplate):
             tr_spaces='Track spacing dictionary.',
             wp_list='list of PMOS widths.',
             wn_list='list of NMOS widths.',
+            sig_locs='Signal track location dictionary.',
             row_layout_info='Row layout information dictionary.',
             show_pins='True to draw pin geometries.',
         )
@@ -398,6 +399,7 @@ class InvChain(StdLaygoTemplate):
         return dict(
             wp_list=None,
             wn_list=None,
+            sig_locs=None,
             row_layout_info=None,
             show_pins=True,
         )
@@ -409,6 +411,7 @@ class InvChain(StdLaygoTemplate):
         tr_spaces = self.params['tr_spaces']
         wp_list = self.params['wp_list']
         wn_list = self.params['wn_list']
+        sig_locs = self.params['sig_locs']
         row_layout_info = self.params['row_layout_info']
         show_pins = self.params['show_pins']
 
@@ -434,6 +437,9 @@ class InvChain(StdLaygoTemplate):
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
+        if sig_locs is None:
+            sig_locs = {}
+
         # get track information
         hm_layer = self.conn_layer + 1
         vm_layer = hm_layer + 1
@@ -449,6 +455,16 @@ class InvChain(StdLaygoTemplate):
         pd0_tid = self.make_track_id(1, 'gb', d_locs[0], width=hm_w_d)
         pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
 
+        if 'in' in sig_locs:
+            in_tid = TrackID(hm_layer, sig_locs['in'], width=hm_w_g)
+            if in_tid.base_index == pg0_tid.base_index:
+                mid_tid = ng0_tid
+            else:
+                mid_tid = pg0_tid
+        else:
+            in_tid = ng0_tid
+            mid_tid = pg0_tid
+
         # add blocks and collect wires
         pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp_list[0])
         ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn_list[0])
@@ -459,7 +475,7 @@ class InvChain(StdLaygoTemplate):
         self.fill_space()
 
         # connect input
-        in_warr = self.connect_to_tracks([pinv0['g'], ninv0['g']], ng0_tid, min_len_mode=0)
+        in_warr = self.connect_to_tracks([pinv0['g'], ninv0['g']], in_tid, min_len_mode=0)
         self.add_pin('in', in_warr, show=show_pins)
 
         # connect output
@@ -474,7 +490,7 @@ class InvChain(StdLaygoTemplate):
         # connect middle
         pout_warr = self.connect_to_tracks(pinv0['d'], pd1_tid, min_len_mode=0)
         nout_warr = self.connect_to_tracks(ninv0['d'], nd1_tid, min_len_mode=0)
-        mid_warr = self.connect_to_tracks([pinv1['g'], ninv1['g']], pg0_tid, min_len_mode=-1)
+        mid_warr = self.connect_to_tracks([pinv1['g'], ninv1['g']], mid_tid, min_len_mode=-1)
         mid_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
                                                     half_track=True)
         tid = TrackID(vm_layer, mid_tidx, width=vm_w_d)

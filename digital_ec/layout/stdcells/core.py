@@ -98,9 +98,10 @@ class StdCellWrapper(DigitalBase):
                 label = ''
             self.reexport(inst.get_port(port_name), label=label, show=True)
 
-        vss_warrs, vdd_warrs, [], [] = self.fill_space()
-        self.add_pin('VSS', vss_warrs, label='VSS:', show=True)
-        self.add_pin('VDD', vdd_warrs, label='VDD:', show=True)
+        bot_warrs, top_warrs, [], [] = self.fill_space()
+        self.add_pin('VSS', bot_warrs, label='VSS:', show=True)
+        top_name = 'VDD' if num_rows % 2 == 1 else 'VSS'
+        self.add_pin(top_name, top_warrs, label=top_name + ':', show=True)
         if hasattr(master, 'sch_params'):
             self._sch_params = master.sch_params
         else:
