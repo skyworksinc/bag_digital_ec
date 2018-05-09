@@ -2,7 +2,7 @@
 
 """This module contains layout generator for various kinds of inverters."""
 
-from typing import TYPE_CHECKING, Dict, Any, Set
+from typing import TYPE_CHECKING, Dict, Any, Set, Union
 
 from bag.layout.routing import TrackManager, TrackID
 
@@ -372,11 +372,17 @@ class InvChain(StdLaygoTemplate):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
         self._sch_params = None
+        self._mid_tidx = None
 
     @property
     def sch_params(self):
         # type: () -> Dict[str, Any]
         return self._sch_params
+
+    @property
+    def mid_tidx(self):
+        # type: () -> Union[float, int]
+        return self._mid_tidx
 
     @classmethod
     def get_params_info(cls):
@@ -481,8 +487,11 @@ class InvChain(StdLaygoTemplate):
         # connect output
         pout_warr = self.connect_to_tracks(pinv1['d'], pd0_tid, min_len_mode=0)
         nout_warr = self.connect_to_tracks(ninv1['d'], nd0_tid, min_len_mode=0)
-        out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
-                                                    half_track=True)
+        if 'out' in sig_locs:
+            out_tidx = sig_locs['out']
+        else:
+            out_tidx = self.grid.coord_to_nearest_track(vm_layer, pout_warr.middle,
+                                                        half_track=True)
         tid = TrackID(vm_layer, out_tidx, width=vm_w_d)
         out_warr = self.connect_to_tracks([pout_warr, nout_warr], tid)
         self.add_pin('out', out_warr, show=show_pins)
@@ -514,3 +523,4 @@ class InvChain(StdLaygoTemplate):
             wp_list=wp_list,
             wn_list=wn_list,
         )
+        self._mid_tidx = mid_tidx
