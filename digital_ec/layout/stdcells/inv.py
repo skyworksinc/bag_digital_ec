@@ -2,7 +2,7 @@
 
 """This module contains layout generator for various kinds of inverters."""
 
-from typing import TYPE_CHECKING, Dict, Any, Set, Union
+from typing import TYPE_CHECKING, Dict, Any, Set, Union, Iterable
 
 from bag.layout.routing import TrackManager, TrackID
 
@@ -438,7 +438,7 @@ class InvChain(StdLaygoTemplate):
             raise ValueError('Now only 2 inverters are supported.')
 
         seg_in, seg_out = seg_list
-        seg_tot = seg_in + seg_out
+        seg_tot = self.compute_num_cols(seg_list)
         vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg_tot)
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
@@ -524,3 +524,8 @@ class InvChain(StdLaygoTemplate):
             wn_list=wn_list,
         )
         self._mid_tidx = mid_tidx
+
+    @classmethod
+    def compute_num_cols(cls, seg_list):
+        # type: (Iterable[int]) -> int
+        return sum(seg_list)

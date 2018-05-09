@@ -282,13 +282,6 @@ class StdDigitalTemplate(DigitalBase, metaclass=abc.ABCMeta):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         DigitalBase.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
 
-    @property
-    def sub_columns(self):
-        lch = self.params['config']['lch']
-        grid = self.grid
-        lch_unit = int(round(lch / (grid.layout_unit * grid.resolution)))
-        return self.get_sub_columns(grid.tech_info, lch_unit)
-
     def add_substrate_tap(self, loc, nx=1):
         nsub = self._laygo_info.sub_columns
         params = dict(
