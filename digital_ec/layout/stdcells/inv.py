@@ -68,6 +68,9 @@ class Inverter(StdLaygoTemplate):
             show_pins=True,
         )
 
+    def get_layout_basename(self):
+        return 'inv_%dx' % self.params['seg']
+
     def draw_layout(self):
         config = self.params['config']
         row_layout_info = self.params['row_layout_info']
@@ -228,9 +231,9 @@ class InverterTristate(StdLaygoTemplate):
 
     def get_layout_basename(self):
         if self.params['pmos_switch']:
-            return 'tinv'
+            return 'tinv_%dx' % self.params['seg']
         else:
-            return 'tinv_pass0'
+            return 'tinv_pass0_%dx' % self.params['seg']
 
     def draw_layout(self):
         config = self.params['config']
@@ -425,6 +428,10 @@ class InvChain(StdLaygoTemplate):
             row_layout_info=None,
             show_pins=True,
         )
+
+    def get_layout_basename(self):
+        seg_list = self.params['seg_list']
+        return 'inv_chain_n%d_%dx' % (len(seg_list), seg_list[-1])
 
     def draw_layout(self):
         config = self.params['config']

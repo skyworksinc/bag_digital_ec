@@ -78,9 +78,9 @@ class LatchCK2(StdDigitalTemplate):
 
     def get_layout_basename(self):
         if self.params['pass_zero']:
-            return 'latch_ck2_pass0'
+            return 'latch_ck2_pass0_%dx' % self.params['seg']
         else:
-            return 'latch_ck2'
+            return 'latch_ck2_%dx' % self.params['seg']
 
     def draw_layout(self):
         blk_sp = 2
@@ -311,9 +311,9 @@ class DFlipFlopCK2(StdDigitalTemplate):
 
     def get_layout_basename(self):
         if self.params['pass_zero']:
-            return 'dff_ck2_pass0'
+            return 'dff_ck2_pass0_%dx' % self.params['seg']
         else:
-            return 'dff_ck2'
+            return 'dff_ck2_%dx' % self.params['seg']
 
     def draw_layout(self):
         blk_sp = 2

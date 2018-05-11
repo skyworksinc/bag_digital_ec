@@ -64,6 +64,9 @@ class Passgate(StdLaygoTemplate):
             show_pins=True,
         )
 
+    def get_layout_basename(self):
+        return 'pass_gate_%dx' % self.params['seg']
+
     def draw_layout(self):
         config = self.params['config']
         seg = self.params['seg']
