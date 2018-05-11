@@ -228,9 +228,9 @@ class InverterTristate(StdLaygoTemplate):
 
     def get_layout_basename(self):
         if self.params['pmos_switch']:
-            return 'inv_tristate'
+            return 'tinv'
         else:
-            return 'inv_tristate_pass0'
+            return 'tinv_pass0'
 
     def draw_layout(self):
         config = self.params['config']

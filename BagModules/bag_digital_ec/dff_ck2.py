@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
+from typing import Dict, Any
 
 import os
 import pkg_resources
@@ -32,8 +32,25 @@ class bag_digital_ec__dff_ck2(Module):
             thn='NMOS threshold.',
             seg_m='Master latch segments dictionary.',
             seg_s='Slave latch segments dictionary.',
+            pass_zero='True to allow a 0 input to pass straight through.',
         )
 
-    def design(self, lch, wp, wn, thp, thn, seg_m, seg_s):
-        self.instances['XM'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_m)
-        self.instances['XS'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_s)
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            pass_zero=False,
+        )
+
+    def get_master_basename(self):
+        # type: () -> str
+        if self.params['pass_zero']:
+            return 'dff_ck2_pass0'
+        else:
+            return 'dff_ck2'
+
+    def design(self, lch, wp, wn, thp, thn, seg_m, seg_s, pass_zero):
+        self.instances['XM'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_m,
+                                    pass_zero=pass_zero)
+        self.instances['XS'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_s,
+                                    pass_zero=pass_zero)

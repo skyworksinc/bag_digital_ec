@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
+from typing import Dict, Any
 
 import os
 import pkg_resources
@@ -32,14 +32,33 @@ class bag_digital_ec__tinv(Module):
             thn='NMOS threshold.',
             segp='PMOS segments.',
             segn='NMOS segments.',
+            pmos_switch='True to add PMOS enable switch.',
         )
 
-    def design(self, lch, wp, wn, thp, thn, segp, segn):
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            pmos_switch=True,
+        )
+
+    def get_master_basename(self):
+        # type: () -> str
+        if self.params['pmos_switch']:
+            return 'tinv'
+        else:
+            return 'tinv_pass0'
+
+    def design(self, lch, wp, wn, thp, thn, segp, segn, pmos_switch):
         if segp < 1 or segn < 1:
             raise ValueError('number of segments must be >= 1.')
 
         self._set_segments('XN', 'XNEN', 'mn', lch, wn, thn, segn)
-        self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, segp)
+        if pmos_switch:
+            self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, segp)
+        else:
+            self.delete_instance('XPEN')
+            self.instances['XP'].design(w=wp, l=lch, nf=segp, intent=thp)
 
     def _set_segments(self, bot_name, top_name, mid_name, lch, w, th, seg):
         self.instances[bot_name].design(w=w, l=lch, nf=1, intent=th)

@@ -78,9 +78,9 @@ class LatchCK2(StdDigitalTemplate):
 
     def get_layout_basename(self):
         if self.params['pass_zero']:
-            return 'latch_en_retime_ck2'
+            return 'latch_ck2_pass0'
         else:
-            return 'latck_ck2'
+            return 'latch_ck2'
 
     def draw_layout(self):
         blk_sp = 2
@@ -293,6 +293,7 @@ class DFlipFlopCK2(StdDigitalTemplate):
             wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
+            pass_zero='True to allow a 0 input to pass straight through.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -304,8 +305,15 @@ class DFlipFlopCK2(StdDigitalTemplate):
             wn=None,
             row_layout_info=None,
             sig_locs=None,
+            pass_zero=False,
             show_pins=True,
         )
+
+    def get_layout_basename(self):
+        if self.params['pass_zero']:
+            return 'dff_ck2_pass0'
+        else:
+            return 'dff_ck2'
 
     def draw_layout(self):
         blk_sp = 2
@@ -318,6 +326,7 @@ class DFlipFlopCK2(StdDigitalTemplate):
         wn = self.params['wn']
         row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
+        pass_zero = self.params['pass_zero']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -409,5 +418,6 @@ class DFlipFlopCK2(StdDigitalTemplate):
             thn=config['thn'],
             seg_m=m_master.sch_params['seg_dict'],
             seg_s=s_master.sch_params['seg_dict'],
+            pass_zero=pass_zero,
         )
         self._seg_in = m_master.seg_in
