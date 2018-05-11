@@ -60,6 +60,7 @@ class LatchCK2(StdDigitalTemplate):
             wn='nmos width.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
+            pass_zero='True to allow a 0 input to pass straight through.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -71,8 +72,15 @@ class LatchCK2(StdDigitalTemplate):
             wn=None,
             row_layout_info=None,
             sig_locs=None,
+            pass_zero=False,
             show_pins=True,
         )
+
+    def get_layout_basename(self):
+        if self.params['pass_zero']:
+            return 'latch_en_retime_ck2'
+        else:
+            return 'latck_ck2'
 
     def draw_layout(self):
         blk_sp = 2
@@ -88,6 +96,7 @@ class LatchCK2(StdDigitalTemplate):
         wn = self.params['wn']
         row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
+        pass_zero = self.params['pass_zero']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -147,10 +156,12 @@ class LatchCK2(StdDigitalTemplate):
         params['out_vm'] = False
         params['sig_locs'] = {'in': t0_in_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
                               'en': t0_en_tidx, 'enb': t0_enb_tidx}
+        params['pmos_switch'] = not pass_zero
         t0_master = self.new_template(params=params, temp_cls=InverterTristate)
         params['seg'] = seg_t1
         params['sig_locs'] = {'in': t0_enb_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
                               'en': t1_en_tidx, 'enb': t0_in_tidx}
+        params['pmos_switch'] = True
         t1_master = self.new_template(params=params, temp_cls=InverterTristate)
 
         # set size
@@ -205,28 +216,33 @@ class LatchCK2(StdDigitalTemplate):
             clkb_tidx = lay_info.col_to_track(ym_layer, clkb_col)
         clkb_tid = TrackID(ym_layer, clkb_tidx, width=ym_w_in)
         t0_en = t0.get_pin('en')
-        t0_enb = t0.get_pin('enb')
         t1_en = t1.get_pin('en')
         t1_enb = t1.get_pin('enb')
-        t0_enb = self.extend_wires(t0_enb, min_len_mode=1)[0]
         t1_enb = self.extend_wires(t1_enb, min_len_mode=-1)[0]
         clk = self.connect_to_tracks([t0_en, t1_enb], clk_tid)
-        clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
+        if not pass_zero:
+            t0_enb = t0.get_pin('enb')
+            t0_enb = self.extend_wires(t0_enb, min_len_mode=1)[0]
+            clkb = self.connect_to_tracks([t0_enb, t1_en], clkb_tid)
+            self.add_pin('pclkb', t0_enb, label='clkb', show=False)
+        else:
+            clkb = self.connect_to_tracks(t1_en, clkb_tid, min_len_mode=0)
         self.add_pin('clk', clk, show=show_pins)
         self.add_pin('clkb', clkb, show=show_pins)
-        self.add_pin('pclkb', t0_enb, label='clkb', show=False)
         self.add_pin('nclk', t0_en, label='clk', show=False)
         self.add_pin('pclk', t1_enb, label='clk', show=False)
         self.add_pin('nclkb', t1_en, label='clkb', show=False)
 
         # set properties
+        pseg_t0 = t0_master.sch_params['segp']
         self._sch_params = dict(
             lch=config['lch'],
             wp=wp,
             wn=wn,
             thp=config['thp'],
             thn=config['thn'],
-            seg_dict=dict(pinv=seg, ninv=seg, pt0=seg_t0, nt0=seg_t0, pt1=seg_t1, nt1=seg_t1),
+            seg_dict=dict(pinv=seg, ninv=seg, pt0=pseg_t0, nt0=seg_t0, pt1=seg_t1, nt1=seg_t1),
+            pass_zero=pass_zero,
         )
         self._seg_in = seg_t0
 

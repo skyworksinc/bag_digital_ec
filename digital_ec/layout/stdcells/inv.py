@@ -209,6 +209,7 @@ class InverterTristate(StdLaygoTemplate):
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
+            pmos_switch='True to add PMOS enable switch.',
             show_pins='True to draw pin geometries.',
         )
 
@@ -221,8 +222,15 @@ class InverterTristate(StdLaygoTemplate):
             row_layout_info=None,
             sig_locs=None,
             out_vm=True,
+            pmos_switch=True,
             show_pins=True,
         )
+
+    def get_layout_basename(self):
+        if self.params['pmos_switch']:
+            return 'inv_tristate'
+        else:
+            return 'inv_tristate_pass0'
 
     def draw_layout(self):
         config = self.params['config']
@@ -234,6 +242,7 @@ class InverterTristate(StdLaygoTemplate):
         row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
         out_vm = self.params['out_vm']
+        pmos_switch = self.params['pmos_switch']
         show_pins = self.params['show_pins']
 
         wp_row = config['wp']
@@ -267,7 +276,8 @@ class InverterTristate(StdLaygoTemplate):
         tr_w_out_v = tr_manager.get_width(vm_layer, 'out')
 
         # add blocks and collect wires
-        pinv = self.add_laygo_mos(1, 0, seg, gate_loc='s', stack=True, w=wp)
+        pseg = seg if pmos_switch else 2 * seg
+        pinv = self.add_laygo_mos(1, 0, pseg, gate_loc='s', stack=pmos_switch, w=wp)
         ninv = self.add_laygo_mos(0, 0, seg, gate_loc='s', stack=True, w=wn)
         vdd = pinv['s']
         vss = ninv['s']
@@ -305,12 +315,18 @@ class InverterTristate(StdLaygoTemplate):
             nout_tidx = self.get_track_index(0, 'gb', out_loc)
 
         # connect wires
+        in_warr_list = [pin, nin]
+        if pmos_switch:
+            tid = TrackID(hm_layer, enb_tidx, width=tr_w_en)
+            enb_warr = self.connect_to_tracks(enb, tid)
+            self.add_pin('enb', enb_warr, show=show_pins)
+        else:
+            in_warr_list.append(enb)
+
         tid = TrackID(hm_layer, in_tidx, width=tr_w_in)
-        in_warr = self.connect_to_tracks([pin, nin], tid)
+        in_warr = self.connect_to_tracks(in_warr_list, tid)
         tid = TrackID(hm_layer, en_tidx, width=tr_w_en)
         en_warr = self.connect_to_tracks(en, tid)
-        tid = TrackID(hm_layer, enb_tidx, width=tr_w_en)
-        enb_warr = self.connect_to_tracks(enb, tid)
         tid = TrackID(hm_layer, pout_tidx, width=tr_w_out_h)
         pout_warr = self.connect_to_tracks(pout, tid, min_len_mode=0)
         tid = TrackID(hm_layer, nout_tidx, width=tr_w_out_h)
@@ -334,7 +350,6 @@ class InverterTristate(StdLaygoTemplate):
         self.add_pin('VDD', vdd_warr, show=show_pins)
         self.add_pin('in', in_warr, show=show_pins)
         self.add_pin('en', en_warr, show=show_pins)
-        self.add_pin('enb', enb_warr, show=show_pins)
         self.add_pin('pout', pout_warr, label='out', show=False)
         self.add_pin('nout', nout_warr, label='out', show=False)
 
@@ -345,8 +360,9 @@ class InverterTristate(StdLaygoTemplate):
             wn=wn,
             thp=config['thp'],
             thn=config['thn'],
-            segp=seg,
+            segp=pseg,
             segn=seg,
+            pmos_switch=pmos_switch,
         )
 
 
