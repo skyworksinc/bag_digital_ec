@@ -15,7 +15,7 @@ instances:
         net_name: "VDD"
         num_bits: 1
       out:
-        direction: inputOutput
+        direction: output
         net_name: "mid"
         num_bits: 1
       en:
@@ -43,7 +43,7 @@ instances:
         net_name: "VDD"
         num_bits: 1
       out:
-        direction: inputOutput
+        direction: output
         net_name: "mid"
         num_bits: 1
       en:

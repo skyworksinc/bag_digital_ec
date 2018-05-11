@@ -8,7 +8,7 @@ from digital_ec.layout.stdcells.core import StdCellWrapper
 
 
 if __name__ == '__main__':
-    with open('specs_test/digital_ec/stdcells/latch_en_retime_ck2.yaml', 'r') as f:
+    with open('specs_test/digital_ec/stdcells/latch_ck2_pass0.yaml', 'r') as f:
         block_specs = yaml.load(f)
 
     local_dict = locals()
@@ -20,5 +20,5 @@ if __name__ == '__main__':
         print('loading BAG project')
         bprj = local_dict['bprj']
 
-    StdCellWrapper.generate_cells(bprj, block_specs, debug=True)
-    # StdCellWrapper.generate_cells(bprj, block_specs, gen_sch=True, run_lvs=False, debug=True)
+    # StdCellWrapper.generate_cells(bprj, block_specs, debug=True)
+    StdCellWrapper.generate_cells(bprj, block_specs, gen_sch=True, run_lvs=False, debug=True)

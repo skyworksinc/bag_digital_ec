@@ -42,14 +42,6 @@ instances:
         direction: inputOutput
         net_name: "enb"
         num_bits: 1
-  PIN3:
-    lib_name: basic
-    cell_name: iopin
-    instpins: {}
-  PIN2:
-    lib_name: basic
-    cell_name: iopin
-    instpins: {}
   PIN1:
     lib_name: basic
     cell_name: iopin
@@ -58,6 +50,10 @@ instances:
     lib_name: basic
     cell_name: iopin
     instpins: {}
+  PIN6:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
   PIN5:
     lib_name: basic
     cell_name: ipin
@@ -65,4 +61,8 @@ instances:
   PIN4:
     lib_name: basic
     cell_name: ipin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: opin
     instpins: {}

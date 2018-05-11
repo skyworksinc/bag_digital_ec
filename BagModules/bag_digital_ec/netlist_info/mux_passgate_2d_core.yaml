@@ -23,11 +23,11 @@ instances:
         net_name: "VDD"
         num_bits: 1
       out:
-        direction: inputOutput
+        direction: output
         net_name: "mid"
         num_bits: 1
       in:
-        direction: inputOutput
+        direction: input
         net_name: "in"
         num_bits: 1
   XMUX1:
@@ -51,21 +51,13 @@ instances:
         net_name: "VDD"
         num_bits: 1
       out:
-        direction: inputOutput
+        direction: output
         net_name: "out"
         num_bits: 1
       in:
-        direction: inputOutput
+        direction: input
         net_name: "mid"
         num_bits: 1
-  PIN5:
-    lib_name: basic
-    cell_name: iopin
-    instpins: {}
-  PIN4:
-    lib_name: basic
-    cell_name: iopin
-    instpins: {}
   PIN1:
     lib_name: basic
     cell_name: iopin
@@ -73,6 +65,10 @@ instances:
   PIN0:
     lib_name: basic
     cell_name: iopin
+    instpins: {}
+  PIN8:
+    lib_name: basic
+    cell_name: ipin
     instpins: {}
   PIN7:
     lib_name: basic
@@ -89,4 +85,8 @@ instances:
   PIN2:
     lib_name: basic
     cell_name: ipin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: opin
     instpins: {}

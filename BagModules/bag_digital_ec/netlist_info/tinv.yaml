@@ -82,10 +82,6 @@ instances:
         direction: inputOutput
         net_name: "in"
         num_bits: 1
-  PIN6:
-    lib_name: basic
-    cell_name: iopin
-    instpins: {}
   PIN1:
     lib_name: basic
     cell_name: iopin
@@ -105,4 +101,8 @@ instances:
   PIN2:
     lib_name: basic
     cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
     instpins: {}

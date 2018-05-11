@@ -58,7 +58,9 @@ class bag_digital_ec__tinv(Module):
             self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, segp)
         else:
             self.delete_instance('XPEN')
+            self.remove_pin('enb')
             self.instances['XP'].design(w=wp, l=lch, nf=segp, intent=thp)
+            self.reconnect_instance_terminal('XP', 'D', 'out')
 
     def _set_segments(self, bot_name, top_name, mid_name, lch, w, th, seg):
         self.instances[bot_name].design(w=w, l=lch, nf=1, intent=th)
