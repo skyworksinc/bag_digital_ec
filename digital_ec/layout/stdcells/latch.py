@@ -139,15 +139,15 @@ class LatchCK2(StdDigitalTemplate):
         clkb_tidx = sig_locs.get('clkb', None)
 
         # make masters
+        seg_t1 = max(1, int(round(seg / (2 * fb_fanout))) * 2)
+        seg_t0 = max(2 * seg_t1, max(2, int(round(seg / (2 * in_fanout))) * 2))
         params['sig_locs'] = {'in': t0_en_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx}
         inv_master = self.new_template(params=params, temp_cls=Inverter)
-        seg_t0 = max(2, int(round(seg / (2 * in_fanout))) * 2)
         params['seg'] = seg_t0
         params['out_vm'] = False
         params['sig_locs'] = {'in': t0_in_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
                               'en': t0_en_tidx, 'enb': t0_enb_tidx}
         t0_master = self.new_template(params=params, temp_cls=InverterTristate)
-        seg_t1 = max(2, int(round(seg / (2 * fb_fanout))) * 2)
         params['seg'] = seg_t1
         params['sig_locs'] = {'in': t0_enb_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx,
                               'en': t1_en_tidx, 'enb': t0_in_tidx}
