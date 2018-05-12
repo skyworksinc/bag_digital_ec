@@ -33,6 +33,10 @@ class bag_digital_ec__tinv(Module):
             segp='PMOS segments.',
             segn='NMOS segments.',
             pmos_switch='True to add PMOS enable switch.',
+            wpen='PMOS enable width.',
+            wnen='NMOS enable width.',
+            thpen='PMOS enable threshold.',
+            thnen='NMOS enable threshold.',
         )
 
     @classmethod
@@ -40,6 +44,10 @@ class bag_digital_ec__tinv(Module):
         # type: () -> Dict[str, Any]
         return dict(
             pmos_switch=True,
+            wpen=None,
+            wnen=None,
+            thpen=None,
+            thnen=None,
         )
 
     def get_master_basename(self):
@@ -49,22 +57,26 @@ class bag_digital_ec__tinv(Module):
         else:
             return 'tinv_pass0'
 
-    def design(self, lch, wp, wn, thp, thn, segp, segn, pmos_switch):
+    def design(self, lch, wp, wn, thp, thn, segp, segn, pmos_switch, wpen, wnen, thpen, thnen):
         if segp < 1 or segn < 1:
             raise ValueError('number of segments must be >= 1.')
 
-        self._set_segments('XN', 'XNEN', 'mn', lch, wn, thn, segn)
+        self._set_segments('XN', 'XNEN', 'mn', lch, wn, thn, wnen, thnen, segn)
         if pmos_switch:
-            self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, segp)
+            self._set_segments('XP', 'XPEN', 'mp', lch, wp, thp, wpen, thpen, segp)
         else:
             self.delete_instance('XPEN')
             self.remove_pin('enb')
             self.instances['XP'].design(w=wp, l=lch, nf=segp, intent=thp)
             self.reconnect_instance_terminal('XP', 'D', 'out')
 
-    def _set_segments(self, bot_name, top_name, mid_name, lch, w, th, seg):
+    def _set_segments(self, bot_name, top_name, mid_name, lch, w, th, wen, then, seg):
+        if wen is None:
+            wen = w
+        if then is None:
+            then = th
         self.instances[bot_name].design(w=w, l=lch, nf=1, intent=th)
-        self.instances[top_name].design(w=w, l=lch, nf=1, intent=th)
+        self.instances[top_name].design(w=wen, l=lch, nf=1, intent=then)
         if seg > 1:
             suffix = '<%d:0>' % (seg - 1)
             self.array_instance(bot_name, [bot_name + suffix],

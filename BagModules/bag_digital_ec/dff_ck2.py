@@ -33,6 +33,10 @@ class bag_digital_ec__dff_ck2(Module):
             seg_m='Master latch segments dictionary.',
             seg_s='Slave latch segments dictionary.',
             pass_zero='True to allow a 0 input to pass straight through.',
+            wpen='PMOS enable width.',
+            wnen='NMOS enable width.',
+            thpen='PMOS enable threshold.',
+            thnen='NMOS enable threshold.',
         )
 
     @classmethod
@@ -40,6 +44,10 @@ class bag_digital_ec__dff_ck2(Module):
         # type: () -> Dict[str, Any]
         return dict(
             pass_zero=False,
+            wpen=None,
+            wnen=None,
+            thpen=None,
+            thnen=None,
         )
 
     def get_master_basename(self):
@@ -49,8 +57,10 @@ class bag_digital_ec__dff_ck2(Module):
         else:
             return 'dff_ck2'
 
-    def design(self, lch, wp, wn, thp, thn, seg_m, seg_s, pass_zero):
+    def design(self, lch, wp, wn, thp, thn, seg_m, seg_s, pass_zero, wpen, wnen, thpen, thnen):
         self.instances['XM'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_m,
-                                    pass_zero=pass_zero)
+                                    pass_zero=pass_zero, wpen=wpen, wnen=wnen, thpen=thpen,
+                                    thnen=thnen)
         self.instances['XS'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, seg_dict=seg_s,
-                                    pass_zero=pass_zero)
+                                    pass_zero=pass_zero, wpen=wpen, wnen=wnen, thpen=thpen,
+                                    thnen=thnen)

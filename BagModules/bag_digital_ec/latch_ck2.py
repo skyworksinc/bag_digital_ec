@@ -32,6 +32,10 @@ class bag_digital_ec__latch_ck2(Module):
             thn='NMOS threshold.',
             seg_dict='Segments dictionary.',
             pass_zero='True to allow a 0 input to pass straight through.',
+            wpen='PMOS enable width.',
+            wnen='NMOS enable width.',
+            thpen='PMOS enable threshold.',
+            thnen='NMOS enable threshold.',
         )
 
     @classmethod
@@ -39,6 +43,10 @@ class bag_digital_ec__latch_ck2(Module):
         # type: () -> Dict[str, Any]
         return dict(
             pass_zero=False,
+            wpen=None,
+            wnen=None,
+            thpen=None,
+            thnen=None,
         )
 
     def get_master_basename(self):
@@ -48,12 +56,14 @@ class bag_digital_ec__latch_ck2(Module):
         else:
             return 'latch_ck2'
 
-    def design(self, lch, wp, wn, thp, thn, seg_dict, pass_zero):
+    def design(self, lch, wp, wn, thp, thn, seg_dict, pass_zero, wpen, wnen, thpen, thnen):
         self.instances['XTBUF'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
                                        segp=seg_dict['pt0'], segn=seg_dict['nt0'],
-                                       pmos_switch=not pass_zero)
+                                       pmos_switch=not pass_zero, wpen=wpen, wnen=wnen,
+                                       thpen=thpen, thnen=thnen)
         self.instances['XTFB'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
                                       segp=seg_dict['pt1'], segn=seg_dict['nt1'],
-                                      pmos_switch=True)
+                                      pmos_switch=True, wpen=wpen, wnen=wnen,
+                                      thpen=thpen, thnen=thnen)
         self.instances['XBUF'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
                                       segp=seg_dict['pinv'], segn=seg_dict['ninv'])
