@@ -400,7 +400,10 @@ class DFlipFlopCK2(StdDigitalTemplate):
         self.connect_wires([s_inst.get_pin('in'), m_inst.get_pin('out_hm')])
         # connect clocks
         self.connect_wires([s_inst.get_pin('nclk'), m_inst.get_pin('nclkb')])
-        self.connect_wires([s_inst.get_pin('pclkb'), m_inst.get_pin('pclk')])
+        if pass_zero:
+            self.connect_to_track_wires(s_inst.get_pin('clkb'), m_inst.get_pin('pclk'))
+        else:
+            self.connect_wires([s_inst.get_pin('pclkb'), m_inst.get_pin('pclk')])
         # add pins
         self.add_pin('in', m_inst.get_pin('in'), show=show_pins)
         self.add_pin('out', s_inst.get_pin('out'), show=show_pins)
