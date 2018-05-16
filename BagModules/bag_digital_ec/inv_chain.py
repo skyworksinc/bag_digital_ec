@@ -33,9 +33,10 @@ class bag_digital_ec__inv_chain(Module):
             thn='NMOS threshold.',
             segp_list='PMOS segments.',
             segn_list='NMOS segments.',
+            dum_info='Dummy information data structure.',
         )
 
-    def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list):
+    def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list, dum_info):
         ninv = len(wp_list)
         name_list, term_list = [], []
         for idx in range(ninv):
@@ -54,3 +55,5 @@ class bag_digital_ec__inv_chain(Module):
         for idx, (wp, wn, segp, segn) in enumerate(zip(wp_list, wn_list, segp_list, segn_list)):
             self.instances['XINV'][idx].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
                                                segp=segp, segn=segn)
+
+        self.design_dummy_transistors(dum_info, 'XDUM', 'VDD', 'VSS')

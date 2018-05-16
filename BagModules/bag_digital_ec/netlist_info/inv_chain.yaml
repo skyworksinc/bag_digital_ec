@@ -22,6 +22,26 @@ instances:
         direction: input
         net_name: "in"
         num_bits: 1
+  XDUM:
+    lib_name: BAG_prim
+    cell_name: nmos4_standard
+    instpins:
+      S:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      D:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      B:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      G:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
   PIN1:
     lib_name: basic
     cell_name: iopin
