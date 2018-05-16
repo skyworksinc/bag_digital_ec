@@ -150,6 +150,7 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
             num_g_tracks = config['ng_tracks']
             num_gb_tracks = config['ngb_tracks']
             num_ds_tracks = config['nds_tracks']
+            sub_w_list = config.get('sub_w_list', None)
 
             if len(num_g_tracks) != 2 or len(num_gb_tracks) != 2 or len(num_ds_tracks) != 2:
                 raise ValueError('Standard cell must have two rows, NMOS followed by PMOS.')
@@ -175,7 +176,7 @@ class StdLaygoTemplate(LaygoBase, metaclass=abc.ABCMeta):
 
             self.set_row_types(row_list, w_list, orient_list, thres_list, False, 0,
                                num_g_tracks, num_gb_tracks, num_ds_tracks, guard_ring_nf=0,
-                               row_kwargs=row_kwargs, num_col=num_col)
+                               row_kwargs=row_kwargs, num_col=num_col, row_sub_widths=sub_w_list)
 
         if debug:
             for row_idx, row_name in [(0, 'nch'), (1, 'pch')]:
