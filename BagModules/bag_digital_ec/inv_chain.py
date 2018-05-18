@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Dict
+from typing import Dict, Any
 
 import os
 import pkg_resources
@@ -34,6 +34,13 @@ class bag_digital_ec__inv_chain(Module):
             segp_list='PMOS segments.',
             segn_list='NMOS segments.',
             dum_info='Dummy information data structure.',
+        )
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            dum_info=None,
         )
 
     def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list, dum_info):
