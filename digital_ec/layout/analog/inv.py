@@ -5,7 +5,7 @@
 
 from typing import TYPE_CHECKING, Dict, Set, Any
 
-from bag.layout.routing.base import TrackManager
+from bag.layout.routing.base import TrackManager, TrackID
 
 from abs_templates_ec.analog_core.base import AnalogBaseInfo, AnalogBase
 
@@ -58,6 +58,7 @@ class AnaInvChain(AnalogBase):
             seg_list='list of number of segments for each inverter.',
             tr_widths='Track width dictionary.',
             tr_spaces='Track spacing dictionary.',
+            out_tid='Output track ID information.',
             guard_ring_nf='Guard ring width in number of fingers.  0 for no guard ring.',
             show_pins='True to draw pins.',
         )
@@ -65,6 +66,7 @@ class AnaInvChain(AnalogBase):
     @classmethod
     def get_default_param_values(cls):
         return dict(
+            out_tid=None,
             guard_ring_nf=0,
             show_pins=True,
         )
@@ -80,6 +82,7 @@ class AnaInvChain(AnalogBase):
         seg_list = self.params['seg_list']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        out_tid = self.params['out_tid']
         guard_ring_nf = self.params['guard_ring_nf']
         show_pins = self.params['show_pins']
 
@@ -107,9 +110,23 @@ class AnaInvChain(AnalogBase):
 
         ng_tid = self.get_wire_id('nch', 0, 'g', wire_idx=0)
         pg_tid = self.get_wire_id('pch', 0, 'g', wire_idx=0)
+        num = len(seg_list)
+        if out_tid is None:
+            in0_tid = ng_tid
+            out0_tid = pg_tid
+        else:
+            out0_tid = TrackID(hm_layer, out_tid[0], width=out_tid[1])
+            if abs(pg_tid.base_index - out_tid[0]) < abs(ng_tid.base_index - out_tid[0]):
+                in0_tid = ng_tid
+            else:
+                in0_tid = pg_tid
+
+            if num % 2 == 0:
+                tmp = in0_tid
+                in0_tid = out0_tid
+                out0_tid = tmp
 
         col = 0
-        num = len(seg_list)
         prev_out = None
         for idx, seg in enumerate(seg_list):
             out_name = 'out' if idx == num - 1 else 'mid%d' % idx
@@ -118,11 +135,11 @@ class AnaInvChain(AnalogBase):
             self.connect_to_substrate('ptap', nmos['s'])
             self.connect_to_substrate('ntap', pmos['s'])
             if idx % 2 == 0:
-                in_tid = ng_tid
-                out_tid = pg_tid
+                in_tid = in0_tid
+                out_tid = out0_tid
             else:
-                in_tid = pg_tid
-                out_tid = ng_tid
+                in_tid = out0_tid
+                out_tid = in0_tid
 
             if prev_out is None:
                 w_in = self.connect_to_tracks([nmos['g'], pmos['g']], in_tid)
