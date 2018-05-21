@@ -33,6 +33,7 @@ class bag_digital_ec__inv_chain(Module):
             thn='NMOS threshold.',
             segp_list='PMOS segments.',
             segn_list='NMOS segments.',
+            stack_list='list of stack parameters for each inverter.',
             dum_info='Dummy information data structure.',
         )
 
@@ -40,11 +41,18 @@ class bag_digital_ec__inv_chain(Module):
     def get_default_param_values(cls):
         # type: () -> Dict[str, Any]
         return dict(
+            stack_list=None,
             dum_info=None,
         )
 
-    def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list, dum_info):
+    def get_master_basename(self):
+        seg_list = self.params['seg_list']
+        return 'inv_chain_n%d_%dx' % (len(seg_list), seg_list[-1])
+
+    def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list, stack_list, dum_info):
         ninv = len(wp_list)
+        if not stack_list:
+            stack_list = [False] * ninv
         name_list, term_list = [], []
         for idx in range(ninv):
             name_list.append('XINV%d' % idx)
@@ -59,8 +67,9 @@ class bag_digital_ec__inv_chain(Module):
             term_list.append({'in': in_name, 'out': out_name})
 
         self.array_instance('XINV', name_list, term_list=term_list)
-        for idx, (wp, wn, segp, segn) in enumerate(zip(wp_list, wn_list, segp_list, segn_list)):
+        for idx, (wp, wn, segp, segn, stack) in enumerate(zip(wp_list, wn_list, segp_list,
+                                                              segn_list, stack_list)):
             self.instances['XINV'][idx].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn,
-                                               segp=segp, segn=segn)
+                                               segp=segp, segn=segn, stack=stack)
 
         self.design_dummy_transistors(dum_info, 'XDUM', 'VDD', 'VSS')

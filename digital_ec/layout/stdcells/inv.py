@@ -50,6 +50,7 @@ class Inverter(StdLaygoTemplate):
             tr_spaces='Track spacing dictionary.',
             wp='pmos width.',
             wn='nmos width.',
+            stack='True to stack transistors.',
             row_layout_info='Row layout information dictionary.',
             sig_locs='Signal track location dictionary.',
             out_vm='True to draw output on vertical metal layer.',
@@ -62,6 +63,7 @@ class Inverter(StdLaygoTemplate):
         return dict(
             wp=None,
             wn=None,
+            stack=False,
             row_layout_info=None,
             sig_locs=None,
             out_vm=True,
@@ -73,12 +75,13 @@ class Inverter(StdLaygoTemplate):
 
     def draw_layout(self):
         config = self.params['config']
-        row_layout_info = self.params['row_layout_info']
-        wp = self.params['wp']
-        wn = self.params['wn']
         seg = self.params['seg']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
+        wp = self.params['wp']
+        wn = self.params['wn']
+        stack = self.params['stack']
+        row_layout_info = self.params['row_layout_info']
         sig_locs = self.params['sig_locs']
         out_vm = self.params['out_vm']
         show_pins = self.params['show_pins']
@@ -99,7 +102,8 @@ class Inverter(StdLaygoTemplate):
         nout_tidx = sig_locs.get('nout', None)
         out_tidx = sig_locs.get('out', None)
 
-        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg)
+        fg = seg * 2 if stack else seg
+        vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, fg)
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
 
@@ -111,8 +115,8 @@ class Inverter(StdLaygoTemplate):
         tr_w_out_v = tr_manager.get_width(vm_layer, 'out')
 
         # add blocks and collect wires
-        pinv = self.add_laygo_mos(1, 0, seg, w=wp)
-        ninv = self.add_laygo_mos(0, 0, seg, w=wn)
+        pinv = self.add_laygo_mos(1, 0, seg, w=wp, gate_loc='d', stack=stack)
+        ninv = self.add_laygo_mos(0, 0, seg, w=wn, gate_loc='d', stack=stack)
         vdd = pinv['s']
         vss = ninv['s']
         pout = pinv['d']
@@ -168,6 +172,7 @@ class Inverter(StdLaygoTemplate):
             thn=config['thn'],
             segp=seg,
             segn=seg,
+            stack=stack,
         )
 
 
@@ -413,6 +418,7 @@ class InvChain(StdLaygoTemplate):
             tr_spaces='Track spacing dictionary.',
             wp_list='list of PMOS widths.',
             wn_list='list of NMOS widths.',
+            stack_list='list of stack parameters for each inverter.',
             sig_locs='Signal track location dictionary.',
             row_layout_info='Row layout information dictionary.',
             show_pins='True to draw pin geometries.',
@@ -424,6 +430,7 @@ class InvChain(StdLaygoTemplate):
         return dict(
             wp_list=None,
             wn_list=None,
+            stack_list=None,
             sig_locs=None,
             row_layout_info=None,
             show_pins=True,
@@ -436,6 +443,7 @@ class InvChain(StdLaygoTemplate):
     def draw_layout(self):
         config = self.params['config']
         seg_list = self.params['seg_list']
+        stack_list = self.params['stack_list']
         tr_widths = self.params['tr_widths']
         tr_spaces = self.params['tr_spaces']
         wp_list = self.params['wp_list']
@@ -455,13 +463,18 @@ class InvChain(StdLaygoTemplate):
             wn_list = [wn_row] * ninv
         elif len(wn_list) != ninv:
             raise ValueError('length of wn_list != %d' % ninv)
+        if stack_list is None:
+            stack_list = [False] * ninv
+        else:
+            raise ValueError('length of stack_list != %d' % ninv)
 
         # TODO: remove restriction
         if ninv != 2:
             raise ValueError('Now only 2 inverters are supported.')
 
         seg_in, seg_out = seg_list
-        seg_tot = self.compute_num_cols(seg_list)
+        stack_in, stack_out = stack_list
+        seg_tot = self.compute_num_cols(seg_list, stack_list=stack_list)
         vss_tid, vdd_tid = self.setup_floorplan(config, row_layout_info, seg_tot)
 
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
@@ -495,10 +508,11 @@ class InvChain(StdLaygoTemplate):
             mid_tid = pg0_tid
 
         # add blocks and collect wires
-        pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp_list[0])
-        ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn_list[0])
-        pinv1 = self.add_laygo_mos(1, seg_in, seg_out, w=wp_list[1])
-        ninv1 = self.add_laygo_mos(0, seg_in, seg_out, w=wn_list[1])
+        pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp_list[0], stack=stack_in)
+        ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn_list[0], stack=stack_in)
+        col = seg_in * 2 if stack_in else seg_in
+        pinv1 = self.add_laygo_mos(1, col, seg_out, w=wp_list[1], stack=stack_out)
+        ninv1 = self.add_laygo_mos(0, col, seg_out, w=wn_list[1], stack=stack_out)
 
         # compute overall block size and fill spaces
         self.fill_space()
@@ -545,10 +559,16 @@ class InvChain(StdLaygoTemplate):
             segn_list=seg_list,
             wp_list=wp_list,
             wn_list=wn_list,
+            stack_list=stack_list,
         )
         self._mid_tidx = mid_tidx
 
     @classmethod
-    def compute_num_cols(cls, seg_list):
+    def compute_num_cols(cls, seg_list, stack_list=None):
         # type: (Iterable[int]) -> int
-        return sum(seg_list)
+        if not stack_list:
+            return sum(seg_list)
+        else:
+            tot = 0
+            for seg, stack in zip(seg_list, stack_list):
+                tot += seg * 2 if stack else seg
