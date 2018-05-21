@@ -407,6 +407,7 @@ class DFlipFlopCK2(StdDigitalTemplate):
         # add pins
         self.add_pin('in', m_inst.get_pin('in'), show=show_pins)
         self.add_pin('out', s_inst.get_pin('out'), show=show_pins)
+        self.add_pin('out_hm', s_inst.get_pin('out_hm'), show=show_pins)
         self.add_pin('clk', m_inst.get_pin('clkb'), show=show_pins)
         self.add_pin('clkb', m_inst.get_pin('clk'), show=show_pins)
         self.add_pin('clkb_hm', m_inst.get_pin('nclk'), label='clkb', show=show_pins)

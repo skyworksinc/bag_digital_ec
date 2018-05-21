@@ -56,7 +56,7 @@ class bag_digital_ec__inv(Module):
         name_list, term_list = [], []
         suf = '' if seg == 1 else '<%d:0>' % (seg - 1)
         for idx in range(num_stack):
-            name_list.append('%s%d' % (name, idx + suf))
+            name_list.append(('%s%d' % (name, idx)) + suf)
             if idx == 0:
                 s_name = sbot
             else:

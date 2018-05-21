@@ -46,8 +46,8 @@ class bag_digital_ec__inv_chain(Module):
         )
 
     def get_master_basename(self):
-        seg_list = self.params['seg_list']
-        return 'inv_chain_n%d_%dx' % (len(seg_list), seg_list[-1])
+        segn_list = self.params['segn_list']
+        return 'inv_chain_n%d_%dx' % (len(segn_list), segn_list[-1])
 
     def design(self, lch, wp_list, wn_list, thp, thn, segp_list, segn_list, stack_list, dum_info):
         ninv = len(wp_list)

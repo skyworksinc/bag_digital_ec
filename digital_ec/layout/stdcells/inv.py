@@ -465,7 +465,7 @@ class InvChain(StdLaygoTemplate):
             raise ValueError('length of wn_list != %d' % ninv)
         if stack_list is None:
             stack_list = [False] * ninv
-        else:
+        elif len(stack_list) != ninv:
             raise ValueError('length of stack_list != %d' % ninv)
 
         # TODO: remove restriction
@@ -569,6 +569,4 @@ class InvChain(StdLaygoTemplate):
         if not stack_list:
             return sum(seg_list)
         else:
-            tot = 0
-            for seg, stack in zip(seg_list, stack_list):
-                tot += seg * 2 if stack else seg
+            return sum((seg * 2 if stack else seg for seg, stack in zip(seg_list, stack_list)))
