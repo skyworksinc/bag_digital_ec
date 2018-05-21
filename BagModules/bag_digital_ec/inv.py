@@ -46,13 +46,13 @@ class bag_digital_ec__inv(Module):
         self.instances['XP'].design(w=wp, l=lch, nf=segp, intent=thp)
         self.instances['XN'].design(w=wn, l=lch, nf=segn, intent=thn)
         if stack:
-            self._stack_transistors('XP', 'VDD', 'out', wp, lch, thp, segp, 2)
-            self._stack_transistors('XN', 'VSS', 'out', wn, lch, thn, segn, 2)
+            self._stack_transistors('XP', 'midp', 'VDD', 'out', wp, lch, thp, segp, 2)
+            self._stack_transistors('XN', 'midn', 'VSS', 'out', wn, lch, thn, segn, 2)
         else:
             self.instances['XP'].design(w=wp, l=lch, nf=segp, intent=thp)
             self.instances['XN'].design(w=wn, l=lch, nf=segn, intent=thn)
 
-    def _stack_transistors(self, name, sbot, dtop, w, lch, th, seg, num_stack):
+    def _stack_transistors(self, name, mid_name, sbot, dtop, w, lch, th, seg, num_stack):
         name_list, term_list = [], []
         suf = '' if seg == 1 else '<%d:0>' % (seg - 1)
         for idx in range(num_stack):
@@ -60,11 +60,11 @@ class bag_digital_ec__inv(Module):
             if idx == 0:
                 s_name = sbot
             else:
-                s_name = ('mid%d' % (idx - 1)) + suf
+                s_name = ('%s%d' % (mid_name, idx - 1)) + suf
             if idx == num_stack - 1:
                 d_name = dtop
             else:
-                d_name = ('mid%d' % idx) + suf
+                d_name = ('%sd%d' % (mid_name, idx)) + suf
             term_list.append(dict(D=d_name, S=s_name))
 
         self.instances[name].design(w=w, l=lch, nf=1, intent=th)
