@@ -64,7 +64,7 @@ class bag_digital_ec__inv(Module):
             if idx == num_stack - 1:
                 d_name = dtop
             else:
-                d_name = ('%sd%d' % (mid_name, idx)) + suf
+                d_name = ('%s%d' % (mid_name, idx)) + suf
             term_list.append(dict(D=d_name, S=s_name))
 
         self.instances[name].design(w=w, l=lch, nf=1, intent=th)
