@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Dict, Any, Set
 
 from bag.layout.routing import TrackManager, TrackID
 
-from .core import StdLaygoTemplate
+from .core import StdLaygoTemplate, StdDigitalTemplate
+from .inv import Inverter, InverterTristate
 
 if TYPE_CHECKING:
     from bag.layout import TemplateDB
@@ -145,3 +146,183 @@ class Passgate(StdLaygoTemplate):
             segp=seg,
             segn=seg,
         )
+
+
+class MuxTristate(StdDigitalTemplate):
+    """A mux built with tristate inverters.
+
+    Parameters
+    ----------
+    temp_db : TemplateDB
+            the template database.
+    lib_name : str
+        the layout library name.
+    params : Dict[str, Any]
+        the parameter values.
+    used_names : Set[str]
+        a set of already used cell names.
+    **kwargs
+        dictionary of optional parameters.  See documentation of
+        :class:`bag.layout.template.TemplateBase` for details.
+    """
+
+    def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
+        # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
+        StdDigitalTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
+        self._sch_params = None
+        self._seg_in = None
+
+    @property
+    def sch_params(self):
+        # type: () -> Dict[str, Any]
+        return self._sch_params
+
+    @property
+    def seg_in(self):
+        # type: () -> int
+        return self._seg_in
+
+    @classmethod
+    def get_params_info(cls):
+        # type: () -> Dict[str, str]
+        return dict(
+            config='laygo configuration dictionary.',
+            seg='number of segments.',
+            tr_widths='Track width dictionary.',
+            tr_spaces='Track spacing dictionary.',
+            wp='pmos width.',
+            wn='nmos width.',
+            row_layout_info='Row layout information dictionary.',
+            sig_locs='Signal track location dictionary.',
+            show_pins='True to draw pin geometries.',
+        )
+
+    @classmethod
+    def get_default_param_values(cls):
+        # type: () -> Dict[str, Any]
+        return dict(
+            wp=None,
+            wn=None,
+            row_layout_info=None,
+            sig_locs=None,
+            show_pins=True,
+        )
+
+    def get_layout_basename(self):
+        return 'mux_inv_%dx' % self.params['seg']
+
+    def draw_layout(self):
+        blk_sp = 2
+        fanout = 2
+
+        config = self.params['config']
+
+        seg = self.params['seg']
+        tr_widths = self.params['tr_widths']
+        tr_spaces = self.params['tr_spaces']
+        wp = self.params['wp']
+        wn = self.params['wn']
+        row_layout_info = self.params['row_layout_info']
+        sig_locs = self.params['sig_locs']
+        show_pins = self.params['show_pins']
+
+        wp_row = config['wp']
+        wn_row = config['wn']
+        if wp is None:
+            wp = wp_row
+        if wn is None:
+            wn = wn_row
+        if wp < 0 or wp > wp_row or wn < 0 or wn > wn_row:
+            raise ValueError('Invalid choice of wp and/or wn.')
+        if sig_locs is None:
+            sig_locs = {}
+
+        # setup floorplan
+        params = self.params.copy()
+        params['wp'] = wp
+        params['wn'] = wn
+        params['show_pins'] = False
+        params['sig_locs'] = None
+        params['out_vm'] = True
+        if row_layout_info is not None:
+            self.initialize(row_layout_info, 1)
+        else:
+            inv_master = self.new_template(params=params, temp_cls=Inverter)
+            params['row_layout_info'] = row_layout_info = inv_master.row_layout_info
+            self.initialize(row_layout_info, 1)
+
+        # compute track locations
+        hm_layer = self.conn_layer + 1
+        vm_layer = hm_layer + 1
+        tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
+        g_locs = tr_manager.place_wires(hm_layer, ['in', 'in'])[1]
+        d_locs = tr_manager.place_wires(hm_layer, ['out', 'out'])[1]
+        ng0_tidx = self.get_track_index(0, 'g', g_locs[0])
+        ng1_tidx = self.get_track_index(0, 'g', g_locs[1])
+        pg0_tidx = self.get_track_index(1, 'g', g_locs[0])
+        pg1_tidx = self.get_track_index(1, 'g', g_locs[1])
+        nd0_tidx = self.get_track_index(0, 'gb', d_locs[0])
+        nd1_tidx = self.get_track_index(0, 'gb', d_locs[1])
+        pd0_tidx = self.get_track_index(1, 'gb', d_locs[0])
+        pd1_tidx = self.get_track_index(1, 'gb', d_locs[1])
+
+        pen_tidx = sig_locs.get('pen', pg1_tidx)
+        nen_tidx = sig_locs.get('nen', ng1_tidx)
+        in0_tidx = sig_locs.get('in0', pg0_tidx)
+        in1_tidx = sig_locs.get('in1', ng0_tidx)
+
+        # make masters
+        seg_in = max(1, int(round(seg / fanout)))
+        params['sig_locs'] = {'in': in0_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
+        inv_master = self.new_template(params=params, temp_cls=Inverter)
+
+        params['seg'] = seg_in
+        params['sig_locs'] = {'in': in0_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx,
+                              'en': nen_tidx, 'enb': pen_tidx}
+        params['out_vm'] = False
+        t0_master = self.new_template(params=params, temp_cls=InverterTristate)
+        params['sig_locs'] = {'in': in1_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx,
+                              'en': nen_tidx, 'enb': pen_tidx}
+        t1_master = self.new_template(params=params, temp_cls=InverterTristate)
+
+        # set size
+        t0_ncol = t0_master.num_cols
+        t1_ncol = t1_master.num_cols
+        inv_ncol = inv_master.num_cols
+        num_cols = t0_ncol + t1_ncol + inv_ncol + 2 * blk_sp
+        self.set_digital_size(num_cols)
+
+        # add instances
+        t1_col = t0_ncol + blk_sp
+        inv_col = num_cols - inv_ncol
+        t0 = self.add_digital_block(t0_master, (0, 0))
+        t1 = self.add_digital_block(t1_master, (t1_col, 0))
+        inv = self.add_digital_block(inv_master, (inv_col, 0))
+
+        self.fill_space()
+
+        # connect/export VSS/VDD
+        vss_list, vdd_list = [], []
+        for inst in (t0, t1, inv):
+            vss_list.append(inst.get_pin('VSS'))
+            vdd_list.append(inst.get_pin('VDD'))
+        self.add_pin('VSS', self.connect_wires(vss_list), show=show_pins)
+        self.add_pin('VDD', self.connect_wires(vdd_list), show=show_pins)
+
+        # export input/output
+        self.add_pin('in0', t0.get_pin('in'), show=show_pins)
+        self.add_pin('in1', t1.get_pin('in'), show=show_pins)
+        self.add_pin('out', inv.get_pin('out'), show=show_pins)
+
+        # set properties
+        pseg_t0 = t0_master.sch_params['segp']
+        nseg_t0 = t0_master.sch_params['segn']
+        self._sch_params = dict(
+            lch=config['lch'],
+            wp=wp,
+            wn=wn,
+            thp=config['thp'],
+            thn=config['thn'],
+            seg_dict=dict(pinv=seg, ninv=seg, pt0=pseg_t0, nt0=nseg_t0),
+        )
+        self._seg_in = seg_in
