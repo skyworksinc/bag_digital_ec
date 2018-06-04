@@ -270,15 +270,18 @@ class MuxTristate(StdDigitalTemplate):
         nen_tidx = sig_locs.get('nen', ng1_tidx)
         in0_tidx = sig_locs.get('in0', pg0_tidx)
         in1_tidx = sig_locs.get('in1', ng0_tidx)
+        out_vm_tidx = sig_locs.get('out', None)
 
         # make masters
         seg_in = max(1, int(round(seg / (fanout // 2))))
         seg_sel = max(1, int(round(seg_in // fanout)))
-        params['sig_locs'] = {'in': in0_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
+        params['sig_locs'] = {'in': pen_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
+        params['out_vm'] = False
         inv_master = self.new_template(params=params, temp_cls=Inverter)
 
         params['seg'] = seg_sel
         params['sig_locs'] = {'in': pen_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
+        params['out_vm'] = True
         sel_master = self.new_template(params=params, temp_cls=Inverter)
 
         params['seg'] = seg_in
@@ -292,14 +295,15 @@ class MuxTristate(StdDigitalTemplate):
 
         # set size
         sel_ncol = sel_master.num_cols
+        sel_sep = blk_sp + 1 if sel_ncol % 2 == 1 else blk_sp
         t0_ncol = t0_master.num_cols
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
-        num_cols = sel_ncol + t0_ncol + t1_ncol + inv_ncol + 3 * blk_sp
+        num_cols = sel_ncol + t0_ncol + t1_ncol + inv_ncol + 2 * blk_sp + sel_sep
         self.set_digital_size(num_cols)
 
         # add instances
-        t0_col = sel_ncol + blk_sp
+        t0_col = sel_ncol + sel_sep
         t1_col = t0_col + t0_ncol + blk_sp
         inv_col = num_cols - inv_ncol
         sel = self.add_digital_block(sel_master, (0, 0))
@@ -320,7 +324,13 @@ class MuxTristate(StdDigitalTemplate):
         # export input/output
         self.add_pin('in0', t0.get_pin('in'), show=show_pins)
         self.add_pin('in1', t1.get_pin('in'), show=show_pins)
-        self.add_pin('out', inv.get_pin('out'), show=show_pins)
+        pout = inv.get_pin('pout')
+        nout = inv.get_pin('nout')
+        if out_vm_tidx is None:
+            out_vm_tidx = self.laygo_info.col_to_track(ym_layer, num_cols - 1)
+
+        out = self.connect_to_tracks([pout, nout], TrackID(ym_layer, out_vm_tidx))
+        self.add_pin('out', out, show=show_pins)
 
         # connect middle node
         col_idx = inv_col - blk_sp // 2

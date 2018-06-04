@@ -579,14 +579,17 @@ class InvChain(StdLaygoTemplate):
         if not stack_list:
             for seg in seg_list:
                 if seg % 2 == 1:
-                    tot_ncol += seg + cls.blk_sp
+                    tot_ncol += seg + cls.blk_sp + 1
                 else:
                     tot_ncol += seg
         else:
             for seg, stack in zip(seg_list, stack_list):
                 fg = seg * 2 if stack else seg
                 if seg % 2 == 1:
-                    tot_ncol += fg + cls.blk_sp
+                    if fg % 2 == 1:
+                        tot_ncol += fg + cls.blk_sp + 1
+                    else:
+                        tot_ncol += fg + cls.blk_sp
                 else:
                     tot_ncol += fg
 
