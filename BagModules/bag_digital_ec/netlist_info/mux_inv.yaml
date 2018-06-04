@@ -1,0 +1,132 @@
+lib_name: bag_digital_ec
+cell_name: mux_inv
+pins: [ "VDD", "VSS", "in1", "sel0", "in0", "out", "sel1" ]
+instances:
+  XINV:
+    lib_name: bag_digital_ec
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "out"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "mid"
+        num_bits: 1
+  XT0:
+    lib_name: bag_digital_ec
+    cell_name: tinv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "mid0"
+        num_bits: 1
+      en:
+        direction: input
+        net_name: "sel0"
+        num_bits: 1
+      enb:
+        direction: input
+        net_name: "sel1"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "in0"
+        num_bits: 1
+  XT1:
+    lib_name: bag_digital_ec
+    cell_name: tinv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "mid1"
+        num_bits: 1
+      en:
+        direction: input
+        net_name: "sel1"
+        num_bits: 1
+      enb:
+        direction: input
+        net_name: "sel0"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "in1"
+        num_bits: 1
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN6:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN5:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN4:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
+    instpins: {}
+  XTHRU0:
+    lib_name: basic
+    cell_name: cds_thru
+    instpins:
+      src:
+        direction: inputOutput
+        net_name: "mid0"
+        num_bits: 1
+      dst:
+        direction: inputOutput
+        net_name: "mid"
+        num_bits: 1
+  XTHRU1:
+    lib_name: basic
+    cell_name: cds_thru
+    instpins:
+      src:
+        direction: inputOutput
+        net_name: "mid1"
+        num_bits: 1
+      dst:
+        direction: inputOutput
+        net_name: "mid"
+        num_bits: 1

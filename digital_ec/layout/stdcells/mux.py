@@ -253,7 +253,7 @@ class MuxTristate(StdDigitalTemplate):
 
         # compute track locations
         hm_layer = self.conn_layer + 1
-        vm_layer = hm_layer + 1
+        ym_layer = hm_layer + 1
         tr_manager = TrackManager(self.grid, tr_widths, tr_spaces, half_space=True)
         g_locs = tr_manager.place_wires(hm_layer, ['in', 'in'])[1]
         d_locs = tr_manager.place_wires(hm_layer, ['out', 'out'])[1]
@@ -313,6 +313,36 @@ class MuxTristate(StdDigitalTemplate):
         self.add_pin('in0', t0.get_pin('in'), show=show_pins)
         self.add_pin('in1', t1.get_pin('in'), show=show_pins)
         self.add_pin('out', inv.get_pin('out'), show=show_pins)
+
+        # connect middle node
+        col_idx = inv_col - blk_sp // 2
+        tr_idx = self.laygo_info.col_to_track(ym_layer, col_idx)
+        hm_list = [t0.get_pin('pout'), t0.get_pin('nout'), t1.get_pin('pout'), t1.get_pin('nout'),
+                   inv.get_pin('in')]
+        self.connect_to_tracks(hm_list, TrackID(ym_layer, tr_idx))
+
+        # connect enables
+        sel0l = self.extend_wires(t0.get_pin('en'), min_len_mode=0)[0]
+        sel0r = self.extend_wires(t1.get_pin('enb'), min_len_mode=0)[0]
+        sel1l = self.extend_wires(t0.get_pin('enb'), min_len_mode=0)[0]
+        sel1r = self.extend_wires(t1.get_pin('en'), min_len_mode=0)[0]
+
+        ym_tidx = self.grid.coord_to_nearest_track(ym_layer, sel0l.middle_unit, mode=1,
+                                                   half_track=True, unit_mode=True)
+        ym_tid = TrackID(ym_layer, ym_tidx)
+        sel0l = self.connect_to_tracks(sel0l, ym_tid, min_len_mode=-1)
+        sel1l = self.connect_to_tracks(sel1l, ym_tid, min_len_mode=1)
+        sel0l = self.connect_to_tracks(sel0l, TrackID(hm_layer, nd0_tidx), min_len_mode=1)
+        sel1l = self.connect_to_tracks(sel1l, TrackID(hm_layer, pd0_tidx), min_len_mode=1)
+
+        sel0_tidx = self.grid.find_next_track(ym_layer, sel0r.middle_unit, mode=-1, half_track=True,
+                                              unit_mode=True)
+        sel1_tidx = sel0_tidx + 1
+        sel0 = self.connect_to_tracks([sel0l, sel0r], TrackID(ym_layer, sel0_tidx))
+        sel1 = self.connect_to_tracks([sel1l, sel1r], TrackID(ym_layer, sel1_tidx))
+
+        self.add_pin('sel0', sel0, show=show_pins)
+        self.add_pin('sel1', sel1, show=show_pins)
 
         # set properties
         pseg_t0 = t0_master.sch_params['segp']
