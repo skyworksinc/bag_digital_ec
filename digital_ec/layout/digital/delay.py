@@ -275,12 +275,11 @@ class DelayLineMux(StdDigitalTemplate):
         # export supply
         vdd = self.connect_wires(vdd_list)
         vss = self.connect_wires(vss_list)
-        self.add_pin('VDD', vdd, show=show_pins)
-        self.add_pin('VSS', vss, show=show_pins)
+        self.add_pin('VDD', vdd, label='VDD:', show=show_pins)
+        self.add_pin('VSS', vss, label='VSS:', show=show_pins)
 
         # set schematic parameters
         self._sch_params = dict(
-            nx=nx,
-            ny=ny,
+            num=nx * ny,
             cell_params=master.sch_params,
         )
