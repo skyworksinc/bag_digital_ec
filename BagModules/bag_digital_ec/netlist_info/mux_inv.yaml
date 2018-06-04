@@ -1,7 +1,27 @@
 lib_name: bag_digital_ec
 cell_name: mux_inv
-pins: [ "VDD", "VSS", "in1", "sel0", "in0", "out", "sel1" ]
+pins: [ "VDD", "VSS", "in1", "in0", "out", "sel1" ]
 instances:
+  XSEL:
+    lib_name: bag_digital_ec
+    cell_name: inv
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "sel0"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "sel1"
+        num_bits: 1
   XINV:
     lib_name: bag_digital_ec
     cell_name: inv
@@ -87,10 +107,6 @@ instances:
     cell_name: iopin
     instpins: {}
   PIN6:
-    lib_name: basic
-    cell_name: ipin
-    instpins: {}
-  PIN5:
     lib_name: basic
     cell_name: ipin
     instpins: {}

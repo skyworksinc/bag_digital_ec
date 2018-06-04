@@ -41,8 +41,11 @@ class bag_digital_ec__mux_inv(Module):
     def design(self, lch, wp, wn, thp, thn, seg_dict):
         pt0 = seg_dict['pt0']
         nt0 = seg_dict['nt0']
-        segp = seg_dict['pinv']
-        segn = seg_dict['ninv']
+        pi = seg_dict['pinv']
+        ni = seg_dict['ninv']
+        ps = seg_dict['psel']
+        ns = seg_dict['nsel']
         self.instances['XT0'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=pt0, segn=nt0)
         self.instances['XT1'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=pt0, segn=nt0)
-        self.instances['XINV'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=segp, segn=segn)
+        self.instances['XINV'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=pi, segn=ni)
+        self.instances['XSEL'].design(lch=lch, wp=wp, wn=wn, thp=thp, thn=thn, segp=ps, segn=ns)

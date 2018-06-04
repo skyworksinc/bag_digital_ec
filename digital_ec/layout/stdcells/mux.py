@@ -213,7 +213,7 @@ class MuxTristate(StdDigitalTemplate):
 
     def draw_layout(self):
         blk_sp = 2
-        fanout = 2
+        fanout = 4
 
         config = self.params['config']
 
@@ -272,9 +272,14 @@ class MuxTristate(StdDigitalTemplate):
         in1_tidx = sig_locs.get('in1', ng0_tidx)
 
         # make masters
-        seg_in = max(1, int(round(seg / fanout)))
+        seg_in = max(1, int(round(seg / (fanout // 2))))
+        seg_sel = max(1, int(round(seg_in // fanout)))
         params['sig_locs'] = {'in': in0_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
         inv_master = self.new_template(params=params, temp_cls=Inverter)
+
+        params['seg'] = seg_sel
+        params['sig_locs'] = {'in': pen_tidx, 'pout': pd0_tidx, 'nout': nd0_tidx}
+        sel_master = self.new_template(params=params, temp_cls=Inverter)
 
         params['seg'] = seg_in
         params['sig_locs'] = {'in': in0_tidx, 'pout': pd1_tidx, 'nout': nd1_tidx,
@@ -286,16 +291,19 @@ class MuxTristate(StdDigitalTemplate):
         t1_master = self.new_template(params=params, temp_cls=InverterTristate)
 
         # set size
+        sel_ncol = sel_master.num_cols
         t0_ncol = t0_master.num_cols
         t1_ncol = t1_master.num_cols
         inv_ncol = inv_master.num_cols
-        num_cols = t0_ncol + t1_ncol + inv_ncol + 2 * blk_sp
+        num_cols = sel_ncol + t0_ncol + t1_ncol + inv_ncol + 3 * blk_sp
         self.set_digital_size(num_cols)
 
         # add instances
-        t1_col = t0_ncol + blk_sp
+        t0_col = sel_ncol + blk_sp
+        t1_col = t0_col + t0_ncol + blk_sp
         inv_col = num_cols - inv_ncol
-        t0 = self.add_digital_block(t0_master, (0, 0))
+        sel = self.add_digital_block(sel_master, (0, 0))
+        t0 = self.add_digital_block(t0_master, (t0_col, 0))
         t1 = self.add_digital_block(t1_master, (t1_col, 0))
         inv = self.add_digital_block(inv_master, (inv_col, 0))
 
@@ -303,7 +311,7 @@ class MuxTristate(StdDigitalTemplate):
 
         # connect/export VSS/VDD
         vss_list, vdd_list = [], []
-        for inst in (t0, t1, inv):
+        for inst in (sel, t0, t1, inv):
             vss_list.append(inst.get_pin('VSS'))
             vdd_list.append(inst.get_pin('VDD'))
         self.add_pin('VSS', self.connect_wires(vss_list), show=show_pins)
@@ -324,8 +332,11 @@ class MuxTristate(StdDigitalTemplate):
         # connect enables
         sel0l = self.extend_wires(t0.get_pin('en'), min_len_mode=0)[0]
         sel0r = self.extend_wires(t1.get_pin('enb'), min_len_mode=0)[0]
-        sel1l = self.extend_wires(t0.get_pin('enb'), min_len_mode=0)[0]
+        sel1l = self.connect_wires([sel.get_pin('in'), t0.get_pin('enb')])[0]
         sel1r = self.extend_wires(t1.get_pin('en'), min_len_mode=0)[0]
+        self.add_pin('sel1', sel1l, show=show_pins)
+
+        self.connect_to_track_wires(sel.get_pin('out'), sel0l)
 
         ym_tidx = self.grid.coord_to_nearest_track(ym_layer, sel0l.middle_unit, mode=1,
                                                    half_track=True, unit_mode=True)
@@ -338,21 +349,20 @@ class MuxTristate(StdDigitalTemplate):
         sel0_tidx = self.grid.find_next_track(ym_layer, sel0r.middle_unit, mode=-1, half_track=True,
                                               unit_mode=True)
         sel1_tidx = sel0_tidx + 1
-        sel0 = self.connect_to_tracks([sel0l, sel0r], TrackID(ym_layer, sel0_tidx))
-        sel1 = self.connect_to_tracks([sel1l, sel1r], TrackID(ym_layer, sel1_tidx))
-
-        self.add_pin('sel0', sel0, show=show_pins)
-        self.add_pin('sel1', sel1, show=show_pins)
+        self.connect_to_tracks([sel0l, sel0r], TrackID(ym_layer, sel0_tidx))
+        self.connect_to_tracks([sel1l, sel1r], TrackID(ym_layer, sel1_tidx))
 
         # set properties
         pseg_t0 = t0_master.sch_params['segp']
         nseg_t0 = t0_master.sch_params['segn']
+        psel = sel_master.sch_params['segp']
+        nsel = sel_master.sch_params['segn']
         self._sch_params = dict(
             lch=config['lch'],
             wp=wp,
             wn=wn,
             thp=config['thp'],
             thn=config['thn'],
-            seg_dict=dict(pinv=seg, ninv=seg, pt0=pseg_t0, nt0=nseg_t0),
+            seg_dict=dict(pinv=seg, ninv=seg, pt0=pseg_t0, nt0=nseg_t0, psel=psel, nsel=nsel),
         )
         self._seg_in = seg_in
