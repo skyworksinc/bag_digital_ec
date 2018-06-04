@@ -1,0 +1,72 @@
+lib_name: bag_digital_ec
+cell_name: delay_cell_mux
+pins: [ "VDD", "VSS", "in", "delay", "out" ]
+instances:
+  PIN1:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN0:
+    lib_name: basic
+    cell_name: iopin
+    instpins: {}
+  PIN6:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN2:
+    lib_name: basic
+    cell_name: ipin
+    instpins: {}
+  PIN3:
+    lib_name: basic
+    cell_name: opin
+    instpins: {}
+  XMUX:
+    lib_name: bag_digital_ec
+    cell_name: mux_inv
+    instpins:
+      in0:
+        direction: input
+        net_name: "in"
+        num_bits: 1
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "out"
+        num_bits: 1
+      in1:
+        direction: input
+        net_name: "ind"
+        num_bits: 1
+      sel1:
+        direction: input
+        net_name: "delay"
+        num_bits: 1
+  XBUF:
+    lib_name: bag_digital_ec
+    cell_name: inv_chain
+    instpins:
+      VSS:
+        direction: inputOutput
+        net_name: "VSS"
+        num_bits: 1
+      VDD:
+        direction: inputOutput
+        net_name: "VDD"
+        num_bits: 1
+      out:
+        direction: output
+        net_name: "ind"
+        num_bits: 1
+      in:
+        direction: input
+        net_name: "in"
+        num_bits: 1

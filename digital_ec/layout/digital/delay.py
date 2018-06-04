@@ -134,7 +134,7 @@ class DelayCellMux(StdDigitalTemplate):
         self.add_pin('in', self.connect_wires([inv.get_pin('in'), mux.get_pin('in0')]),
                      show=show_pins)
         self.add_pin('out', mux.get_pin('out'), show=show_pins)
-        self.add_pin('sel1', mux.get_pin('sel1'), show=show_pins)
+        self.add_pin('delay', mux.get_pin('sel1'), show=show_pins)
 
         # set schematic parameters
         self._sch_params = dict(
