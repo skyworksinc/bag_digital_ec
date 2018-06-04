@@ -8,7 +8,7 @@ from digital_ec.layout.stdcells.core import StdCellWrapper
 
 
 if __name__ == '__main__':
-    with open('specs_test/stdcells/dff_ck2.yaml', 'r') as f:
+    with open('specs_test/digital_ec/stdcells/dff_ck2.yaml', 'r') as f:
         block_specs = yaml.load(f)
 
     local_dict = locals()
