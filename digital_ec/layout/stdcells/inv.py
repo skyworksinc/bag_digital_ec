@@ -392,6 +392,8 @@ class InvChain(StdLaygoTemplate):
         :class:`bag.layout.template.TemplateBase` for details.
     """
 
+    blk_sp = 2
+
     def __init__(self, temp_db, lib_name, params, used_names, **kwargs):
         # type: (TemplateDB, str, Dict[str, Any], Set[str], **Any) -> None
         StdLaygoTemplate.__init__(self, temp_db, lib_name, params, used_names, **kwargs)
@@ -497,20 +499,27 @@ class InvChain(StdLaygoTemplate):
         pd0_tid = self.make_track_id(1, 'gb', d_locs[0], width=hm_w_d)
         pd1_tid = self.make_track_id(1, 'gb', d_locs[1], width=hm_w_d)
 
+        if 'mid' in sig_locs:
+            mid_tid = TrackID(hm_layer, sig_locs['mid'])
+        else:
+            mid_tid = None
         if 'in' in sig_locs:
             in_tid = TrackID(hm_layer, sig_locs['in'], width=hm_w_g)
-            if in_tid.base_index == pg0_tid.base_index:
-                mid_tid = ng0_tid
-            else:
-                mid_tid = pg0_tid
+            if mid_tid is None:
+                if in_tid.base_index == pg0_tid.base_index:
+                    mid_tid = ng0_tid
+                else:
+                    mid_tid = pg0_tid
         else:
             in_tid = ng0_tid
-            mid_tid = pg0_tid
+            if mid_tid is None:
+                mid_tid = pg0_tid
 
         # add blocks and collect wires
         pinv0 = self.add_laygo_mos(1, 0, seg_in, w=wp_list[0], stack=stack_in)
         ninv0 = self.add_laygo_mos(0, 0, seg_in, w=wn_list[0], stack=stack_in)
-        col = seg_in * 2 if stack_in else seg_in
+        fg_in = seg_in * 2 if stack_in else seg_in
+        col = fg_in if seg_in % 2 == 0 else fg_in + self.blk_sp
         pinv1 = self.add_laygo_mos(1, col, seg_out, w=wp_list[1], stack=stack_out)
         ninv1 = self.add_laygo_mos(0, col, seg_out, w=wn_list[1], stack=stack_out)
 
@@ -566,7 +575,19 @@ class InvChain(StdLaygoTemplate):
     @classmethod
     def compute_num_cols(cls, seg_list, stack_list=None):
         # type: (Iterable[int]) -> int
+        tot_ncol = 0
         if not stack_list:
-            return sum(seg_list)
+            for seg in seg_list:
+                if seg % 2 == 1:
+                    tot_ncol += seg + cls.blk_sp
+                else:
+                    tot_ncol += seg
         else:
-            return sum((seg * 2 if stack else seg for seg, stack in zip(seg_list, stack_list)))
+            for seg, stack in zip(seg_list, stack_list):
+                fg = seg * 2 if stack else seg
+                if seg % 2 == 1:
+                    tot_ncol += fg + cls.blk_sp
+                else:
+                    tot_ncol += fg
+
+        return tot_ncol

@@ -334,7 +334,7 @@ class MuxTristate(StdDigitalTemplate):
         sel0r = self.extend_wires(t1.get_pin('enb'), min_len_mode=0)[0]
         sel1l = self.connect_wires([sel.get_pin('in'), t0.get_pin('enb')])[0]
         sel1r = self.extend_wires(t1.get_pin('en'), min_len_mode=0)[0]
-        self.add_pin('sel1', sel1l, show=show_pins)
+        self.add_pin('sel1_hm', sel1l, label='sel1', show=False)
 
         self.connect_to_track_wires(sel.get_pin('out'), sel0l)
 
@@ -343,6 +343,7 @@ class MuxTristate(StdDigitalTemplate):
         ym_tid = TrackID(ym_layer, ym_tidx)
         sel0l = self.connect_to_tracks(sel0l, ym_tid, min_len_mode=-1)
         sel1l = self.connect_to_tracks(sel1l, ym_tid, min_len_mode=1)
+        self.add_pin('sel1', sel1l, show=show_pins)
         sel0l = self.connect_to_tracks(sel0l, TrackID(hm_layer, nd0_tidx), min_len_mode=1)
         sel1l = self.connect_to_tracks(sel1l, TrackID(hm_layer, pd0_tidx), min_len_mode=1)
 
